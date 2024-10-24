@@ -3,7 +3,7 @@ const cors = require("cors");
 require("dotenv").config();
 const connectDB = require("./config/db");
 const { createServer } = require("http");
-const socket = require("./socket"); // Import socket configuration
+// const socket = require("./socket"); 
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -29,13 +29,13 @@ app.use("/api/cart", require("./routes/cartRouter"));
 app.use("/api/orders", require("./routes/orderRouter"));
 
 // Socket.IO Connection
-io.on("connection", (socket) => {
-  console.log("A user connected:", socket.id);
+// io.on("connection", (socket) => {
+//   console.log("A user connected:", socket.id);
 
-  socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
-  });
-});
+//   socket.on("disconnect", () => {
+//     console.log("User disconnected:", socket.id);
+//   });
+// });
 
 httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
