@@ -47,7 +47,7 @@ const EditItem = () => {
     const fetchProduct = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5001/api/products/${id}`
+          `https://ecommerce-backend-ebon-six.vercel.app/api/products/${id}`
         );
         const product = response.data;
 
@@ -256,7 +256,7 @@ const EditItem = () => {
       };
 
       await axios.put(
-        `http://localhost:5001/api/products/${id}`,
+        `https://ecommerce-backend-ebon-six.vercel.app/api/products/${id}`,
         formattedData
       );
 

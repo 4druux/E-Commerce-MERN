@@ -14,7 +14,7 @@ const AdminLogin = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5001/api/user/login",
+        "https://ecommerce-backend-ebon-six.vercel.app/api/user/login",
         {
           email,
           password,

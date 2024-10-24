@@ -122,7 +122,7 @@ const CheckOut = () => {
       selectedItems.map(async (item) => {
         if (!item.imageUrl || !item.name) {
           const productResponse = await axios.get(
-            `http://localhost:5001/api/products/${item._id}`
+            `https://ecommerce-backend-ebon-six.vercel.app/api/products/${item._id}`
           );
           const product = productResponse.data;
           item.imageUrl = product.image

@@ -53,7 +53,7 @@ const Product = () => {
     const fetchProductData = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5001/api/products/${productId}`
+          `https://ecommerce-backend-ebon-six.vercel.app/api/products/${productId}`
         );
         const product = response.data;
         setProductData(product);

@@ -27,7 +27,7 @@ const Cart = () => {
     const fetchCartData = async () => {
       try {
         const token = localStorage.getItem("authToken");
-        const response = await axios.get("http://localhost:5001/api/cart", {
+        const response = await axios.get("https://ecommerce-backend-ebon-six.vercel.app/api/cart", {
           headers: { Authorization: `Bearer ${token}` },
         });
 

@@ -26,7 +26,7 @@ const ProductItem = ({ id, image, name, price }) => {
     const fetchProductRating = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5001/api/products/${id}`
+          `https://ecommerce-backend-ebon-six.vercel.app/api/products/${id}`
         );
         const product = response.data;
         setAverageRating(calculateAverageRating(product.reviews));

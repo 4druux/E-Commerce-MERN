@@ -7,7 +7,7 @@ import io from "socket.io-client"; // Import socket.io client
 
 export const ShopContext = createContext();
 
-const socket = io("http://localhost:5001"); // Set up socket connection
+const socket = io("https://ecommerce-backend-ebon-six.vercel.app"); // Set up socket connection
 
 const ShopContextProvider = (props) => {
   const currency = "Rp";
@@ -23,7 +23,7 @@ const ShopContextProvider = (props) => {
   const fetchCartData = useCallback(
     async (token) => {
       try {
-        const response = await axios.get("http://localhost:5001/api/cart", {
+        const response = await axios.get("https://ecommerce-backend-ebon-six.vercel.app/api/cart", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setCartItems(response.data.items);
@@ -53,7 +53,7 @@ const ShopContextProvider = (props) => {
 
     try {
       const responseUser = await axios.get(
-        "http://localhost:5001/api/user/me",
+        "https://ecommerce-backend-ebon-six.vercel.app/api/user/me",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -63,8 +63,8 @@ const ShopContextProvider = (props) => {
 
       const endpoint =
         role === "admin"
-          ? "http://localhost:5001/api/orders"
-          : "http://localhost:5001/api/orders/user-orders";
+          ? "https://ecommerce-backend-ebon-six.vercel.app/api/orders"
+          : "https://ecommerce-backend-ebon-six.vercel.app/api/orders/user-orders";
 
       const response = await axios.get(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
@@ -122,7 +122,7 @@ const ShopContextProvider = (props) => {
   const fetchProducts = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:5001/api/products/all"
+        "https://ecommerce-backend-ebon-six.vercel.app/api/products/all"
       );
       setProducts(response.data);
     } catch {
@@ -140,7 +140,7 @@ const ShopContextProvider = (props) => {
       const token = localStorage.getItem("authToken");
 
       const productResponse = await axios.get(
-        `http://localhost:5001/api/products/${itemId}`
+        `https://ecommerce-backend-ebon-six.vercel.app/api/products/${itemId}`
       );
       const product = productResponse.data;
 
@@ -159,7 +159,7 @@ const ShopContextProvider = (props) => {
       };
 
       const response = await axios.post(
-        "http://localhost:5001/api/cart/add",
+        "https://ecommerce-backend-ebon-six.vercel.app/api/cart/add",
         dataToSend,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -180,7 +180,7 @@ const ShopContextProvider = (props) => {
     try {
       const token = localStorage.getItem("authToken");
       const response = await axios.post(
-        "http://localhost:5001/api/cart/update",
+        "https://ecommerce-backend-ebon-six.vercel.app/api/cart/update",
         { productId: itemId, size, quantity },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -200,7 +200,7 @@ const ShopContextProvider = (props) => {
     try {
       const token = localStorage.getItem("authToken");
       const response = await axios.post(
-        "http://localhost:5001/api/cart/remove",
+        "https://ecommerce-backend-ebon-six.vercel.app/api/cart/remove",
         { productId: itemId, size },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -216,7 +216,7 @@ const ShopContextProvider = (props) => {
       const token = localStorage.getItem("authToken");
 
       await axios.put(
-        "http://localhost:5001/api/orders/status",
+        "https://ecommerce-backend-ebon-six.vercel.app/api/orders/status",
         { orderId, status: newStatus },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -278,7 +278,7 @@ const ShopContextProvider = (props) => {
 
       // Hanya memperbarui status menjadi Canceled
       await axios.put(
-        "http://localhost:5001/api/orders/status", // Pastikan path ini sesuai dengan router
+        "https://ecommerce-backend-ebon-six.vercel.app/api/orders/status", // Pastikan path ini sesuai dengan router
         { orderId, status: "Canceled" },
         {
           headers: { Authorization: `Bearer ${token}` }, // Sertakan token
@@ -299,7 +299,7 @@ const ShopContextProvider = (props) => {
     try {
       const token = localStorage.getItem("authToken");
 
-      await axios.delete(`http://localhost:5001/api/orders/${orderId}`, {
+      await axios.delete(`https://ecommerce-backend-ebon-six.vercel.app/api/orders/${orderId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

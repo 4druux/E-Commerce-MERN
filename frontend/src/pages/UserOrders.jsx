@@ -15,7 +15,7 @@ import {
 } from "react-icons/fa"; // Icon untuk detail dan tombol close
 
 // Socket connection
-const socket = io("http://localhost:5001");
+const socket = io("https://ecommerce-backend-ebon-six.vercel.app/");
 
 const UserOrders = () => {
   const {
@@ -181,7 +181,7 @@ const UserOrders = () => {
 
     try {
       await axios.post(
-        `http://localhost:5001/api/products/${currentOrderForReview.items[0].productId}/review`,
+        `https://ecommerce-backend-ebon-six.vercel.app/api/products/${currentOrderForReview.items[0].productId}/review`,
         formData,
         { headers: { Authorization: `Bearer ${token}` } }
       );

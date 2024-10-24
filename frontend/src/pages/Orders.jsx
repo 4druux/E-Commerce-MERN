@@ -7,7 +7,7 @@ import { assets } from "../assets/assets";
 import io from "socket.io-client";
 
 // Set up socket connection
-const socket = io("http://localhost:5001");
+const socket = io("https://ecommerce-backend-ebon-six.vercel.app/");
 
 const Orders = () => {
   const {

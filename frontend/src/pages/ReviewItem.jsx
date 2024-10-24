@@ -38,7 +38,7 @@ const ReviewItem = () => {
 
       try {
         const productResponse = await axios.get(
-          `http://localhost:5001/api/products/${productId}`,
+          `https://ecommerce-backend-ebon-six.vercel.app/api/products/${productId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -47,7 +47,7 @@ const ReviewItem = () => {
         );
 
         const reviewResponse = await axios.get(
-          `http://localhost:5001/api/products/admin/${productId}/reviews`,
+          `https://ecommerce-backend-ebon-six.vercel.app/api/products/admin/${productId}/reviews`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -104,7 +104,7 @@ const ReviewItem = () => {
     const token = localStorage.getItem("authToken");
     try {
       await axios.put(
-        `http://localhost:5001/api/products/admin/${productId}/reviews/${reviewId}/reply`,
+        `https://ecommerce-backend-ebon-six.vercel.app/api/products/admin/${productId}/reviews/${reviewId}/reply`,
         { adminReply: replyText },
         {
           headers: {
@@ -131,7 +131,7 @@ const ReviewItem = () => {
     const token = localStorage.getItem("authToken");
     try {
       await axios.delete(
-        `http://localhost:5001/api/products/admin/${productId}/reviews/${reviewId}`,
+        `https://ecommerce-backend-ebon-six.vercel.app/api/products/admin/${productId}/reviews/${reviewId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

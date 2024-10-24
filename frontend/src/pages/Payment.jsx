@@ -36,7 +36,7 @@ const Payment = () => {
     try {
       const token = localStorage.getItem("authToken");
       const response = await axios.post(
-        "http://localhost:5001/api/cart/checkout",
+        "https://ecommerce-backend-ebon-six.vercel.app/api/cart/checkout",
         {
           firstName,
           lastName,
@@ -57,7 +57,7 @@ const Payment = () => {
 
       if (response.status === 200) {
         await axios.post(
-          "http://localhost:5001/api/cart/clear",
+          "https://ecommerce-backend-ebon-six.vercel.app/api/cart/clear",
           {},
           {
             headers: { Authorization: `Bearer ${token}` },

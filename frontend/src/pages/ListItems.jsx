@@ -26,7 +26,7 @@ const ListItems = () => {
     const fetchProducts = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:5001/api/products/all"
+          "https://ecommerce-backend-ebon-six.vercel.app/api/products/all"
         );
         setProducts(response.data);
         setFilteredProducts(response.data);
@@ -75,7 +75,7 @@ const ListItems = () => {
   const handleDelete = async () => {
     try {
       await axios.delete(
-        `http://localhost:5001/api/products/${productToDelete}`
+        `https://ecommerce-backend-ebon-six.vercel.app/api/products/${productToDelete}`
       );
       setProducts(
         products.filter((product) => product._id !== productToDelete)

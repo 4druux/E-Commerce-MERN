@@ -19,7 +19,7 @@ const Collection = () => {
     const fetchProducts = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:5001/api/products/all"
+          "https://ecommerce-backend-ebon-six.vercel.app/api/products/all"
         );
         setProducts(response.data);
       } catch (error) {
