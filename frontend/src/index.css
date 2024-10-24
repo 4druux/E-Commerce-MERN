@@ -1,0 +1,116 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=Prata&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+a.active hr {
+  display: block;
+}
+
+* {
+  font-family: Outfit;
+}
+
+.prata-regular {
+  font-family: "Prata", serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  /* display: none; */
+}
+
+::-webkit-scrollbar-track {
+  background: #fff;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #6b7280;
+  border-radius: 50px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #374151;
+}
+
+@media (max-width: 640px) {
+  a.active {
+    background-color: black;
+    color: white;
+  }
+}
+
+.spinner-border {
+  border-top-color: transparent;
+  border-right-color: transparent;
+  border-bottom-color: white;
+  border-left-color: white;
+}
+
+/* Menghilangkan spinner di semua browser */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+}
+
+.custom-toast {
+  max-width: 300px; /* Menyesuaikan lebar toast */
+  margin-left: auto; /* Membuat margin kiri otomatis sehingga toast berada di kanan */
+  margin-right: 1rem; /* Jarak dari kanan */
+  top: 1rem; /* Jarak dari atas */
+}
+
+.checkmark-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.checkmark {
+  width: 72px;
+  height: 72px;
+  stroke-width: 2;
+  stroke: #4caf50;
+  stroke-miterlimit: 10;
+  animation: scale 0.3s ease-in-out 0.1s both;
+}
+
+.checkmark-circle {
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  stroke-width: 2;
+  stroke: #4caf50;
+  fill: none;
+  animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.checkmark-check {
+  transform-origin: 50% 50%;
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards;
+}
+
+@keyframes stroke {
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes scale {
+  0%,
+  100% {
+    transform: none;
+  }
+  50% {
+    transform: scale3d(1.1, 1.1, 1);
+  }
+}
