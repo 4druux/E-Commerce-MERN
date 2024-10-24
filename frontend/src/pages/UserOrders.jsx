@@ -5,7 +5,6 @@ import { toast } from "react-toastify";
 import Title from "../components/Title";
 import { format } from "date-fns";
 import { formatPrice } from "../utils/formatPrice";
-import io from "socket.io-client";
 import {
   FaUser,
   FaEnvelope,
@@ -14,26 +13,20 @@ import {
   FaTimes,
 } from "react-icons/fa"; // Icon untuk detail dan tombol close
 
-// Socket connection
-const socket = io("https://ecommerce-backend-ebon-six.vercel.app/");
-
 const UserOrders = () => {
   const {
     orders,
-    setOrders,
     currency,
-    delivery_fee, // Pastikan delivery_fee diambil dari ShopContext
+    delivery_fee,
     fetchOrders,
     cancelOrder,
     updateOrderStatus,
   } = useContext(ShopContext);
-  const [filteredStatus, setFilteredStatus] = useState("Pending"); // Set default status
-  const [selectedOrder, setSelectedOrder] = useState(null); // State untuk detail pesanan
-  const [isModalVisible, setIsModalVisible] = useState(false); // Untuk kontrol transisi modal
-  const [isCancelModalVisible, setIsCancelModalVisible] = useState(false); // Modal untuk konfirmasi pembatalan
-  const [orderToCancel, setOrderToCancel] = useState(null); // Pesanan yang akan dibatalkan
-
-  // State untuk modal review
+  const [filteredStatus, setFilteredStatus] = useState("Pending");
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState(null);
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
   const [currentOrderForReview, setCurrentOrderForReview] = useState(null);
   const [reviewData, setReviewData] = useState({
@@ -46,40 +39,30 @@ const UserOrders = () => {
     const token = localStorage.getItem("authToken");
 
     if (token) {
-      fetchOrders(token);
+      fetchOrders(token); // Fetch orders on initial render
     }
 
-    // Mendengarkan event orderUpdated
-    socket.on("orderUpdated", () => {
+    // Set up polling to fetch orders every 10 seconds
+    const intervalId = setInterval(() => {
       if (token) {
-        fetchOrders(token); // Fetch ulang pesanan jika ada perubahan status
+        fetchOrders(token); // Fetch orders periodically
       }
-    });
-
-    // Mendengarkan event orderDeleted
-    socket.on("orderDeleted", ({ orderId }) => {
-      setOrders((prevOrders) =>
-        prevOrders.filter((order) => order._id !== orderId)
-      );
-    });
+    }, 10000); // Polling interval set to 10 seconds (adjust as needed)
 
     return () => {
-      socket.off("orderUpdated");
-      socket.off("orderDeleted");
+      clearInterval(intervalId); // Clear the interval when the component unmounts
     };
-  }, [fetchOrders, setOrders]);
+  }, [fetchOrders]);
 
-  // Tambahkan atau hapus overflow-hidden di body saat modal dibuka atau ditutup
   useEffect(() => {
     if (selectedOrder) {
       document.body.classList.add("overflow-hidden");
-      setIsModalVisible(true); // Set modal terlihat
+      setIsModalVisible(true);
     } else {
       document.body.classList.remove("overflow-hidden");
-      setIsModalVisible(false); // Set modal tidak terlihat
+      setIsModalVisible(false);
     }
 
-    // Cleanup ketika komponen di-unmount
     return () => {
       document.body.classList.remove("overflow-hidden");
     };
@@ -89,12 +72,10 @@ const UserOrders = () => {
     (order) => order.status === filteredStatus
   );
 
-  // Fungsi untuk membuka detail order
   const handleViewDetails = (order) => {
     setSelectedOrder(order);
   };
 
-  // Fungsi untuk menutup detail order dengan klik di luar modal
   const closeDetails = () => {
     setSelectedOrder(null);
   };
@@ -106,46 +87,32 @@ const UserOrders = () => {
   };
 
   const closeDetailsWithAnimation = () => {
-    setIsModalVisible(false); // Mulai transisi animasi ke bawah
+    setIsModalVisible(false);
     setTimeout(() => {
-      setSelectedOrder(null); // Setelah animasi selesai, baru benar-benar tutup modal
-    }, 700); // Durasi diperpanjang untuk transisi smooth
+      setSelectedOrder(null);
+    }, 700);
   };
 
-  // Fungsi untuk menampilkan modal konfirmasi cancel order
   const confirmCancelOrder = (order) => {
-    setOrderToCancel(order); // Set pesanan yang akan dibatalkan
-    setIsCancelModalVisible(true); // Tampilkan modal
+    setOrderToCancel(order);
+    setIsCancelModalVisible(true);
   };
 
-  // Fungsi untuk membatalkan pesanan
   const handleCancelOrder = () => {
     if (orderToCancel) {
-      cancelOrder(orderToCancel._id); // Pastikan menggunakan _id yang benar
-      setIsCancelModalVisible(false); // Tutup modal konfirmasi
-      setFilteredStatus("Canceled"); // Pindahkan pesanan ke filter Canceled
-
-      // Emit event untuk memberitahu admin bahwa pesanan diperbarui
-      socket.emit("orderUpdated", {
-        orderId: orderToCancel._id,
-        status: "Canceled",
-      });
+      cancelOrder(orderToCancel._id);
+      setIsCancelModalVisible(false);
+      setFilteredStatus("Canceled");
     }
   };
 
-  // Fungsi untuk menangani mark sebagai completed
   const handleMarkAsCompleted = (order) => {
     setCurrentOrderForReview(order);
-    setIsReviewModalVisible(true); // Tampilkan modal review
+    setIsReviewModalVisible(true);
   };
 
-  // Fungsi untuk menangani mark sebagai returned
   const handleMarkAsReturned = async (order) => {
-    // Ubah status pesanan menjadi Returned
     await updateOrderStatus(order._id, "Returned");
-
-    // Emit event untuk memberitahu admin bahwa pesanan diperbarui
-    socket.emit("orderUpdated", { orderId: order._id, status: "Returned" });
   };
 
   const convertToBase64 = (file) => {
@@ -161,14 +128,12 @@ const UserOrders = () => {
     event.preventDefault();
     const token = localStorage.getItem("authToken");
 
-    // Pastikan size diambil dari produk yang dibeli
     const formData = {
       rating: reviewData.rating,
       reviewText: reviewData.review,
-      size: currentOrderForReview.items[0].size, // Ambil size dari produk yang dibeli
+      size: currentOrderForReview.items[0].size,
     };
 
-    // Jika ada gambar, konversi ke base64
     if (reviewData.images && reviewData.images.length > 0) {
       const imagePromises = reviewData.images.map((image) =>
         convertToBase64(image)
@@ -176,7 +141,7 @@ const UserOrders = () => {
       const base64Images = await Promise.all(imagePromises);
       formData.reviewImages = base64Images;
     } else {
-      formData.reviewImages = []; // Jika tidak ada gambar, kirim array kosong
+      formData.reviewImages = [];
     }
 
     try {
@@ -203,7 +168,6 @@ const UserOrders = () => {
         <Title text1={"MY"} text2={"ORDERS"} />
       </div>
 
-      {/* Filter for mobile (dropdown) */}
       <div className="block md:hidden mb-6">
         <select
           value={filteredStatus}
@@ -217,7 +181,7 @@ const UserOrders = () => {
             "Shipped",
             "Completed",
             "Returned",
-            "Canceled", // Menambahkan filter untuk Canceled orders
+            "Canceled",
           ].map((status) => (
             <option key={status} value={status}>
               {status}
@@ -226,7 +190,6 @@ const UserOrders = () => {
         </select>
       </div>
 
-      {/* Filter for desktop (buttons) */}
       <div className="hidden md:flex gap-2 my-6 justify-center whitespace-nowrap">
         {[
           "Pending",
@@ -235,7 +198,7 @@ const UserOrders = () => {
           "Shipped",
           "Completed",
           "Returned",
-          "Canceled", // Menambahkan filter untuk Canceled orders
+          "Canceled",
         ].map((status) => (
           <button
             key={status}
@@ -251,7 +214,6 @@ const UserOrders = () => {
         ))}
       </div>
 
-      {/* Daftar Pesanan */}
       {filteredOrders.length === 0 ? (
         <p className="text-gray-500 text-center py-16">No orders found.</p>
       ) : (
@@ -261,7 +223,6 @@ const UserOrders = () => {
               key={index}
               className="py-4 my-5 border-t border-b text-gray-700 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
             >
-              {/* Left side: Image and Details */}
               <div className="flex items-start gap-4 text-sm">
                 <img
                   className="w-16 sm:w-20"
@@ -279,7 +240,7 @@ const UserOrders = () => {
                         order.items.reduce(
                           (total, item) => total + item.price * item.quantity,
                           0
-                        ) + delivery_fee // Tambahkan delivery_fee
+                        ) + delivery_fee
                       )}
                     </p>
                     <p>x{order.items[0]?.quantity || "N/A"}</p>
@@ -296,9 +257,7 @@ const UserOrders = () => {
                 </div>
               </div>
 
-              {/* Right side: Status and View Details */}
               <div className="md:w-1/2 flex justify-between items-center">
-                {/* Order Status berada di tengah */}
                 <div className="flex items-center justify-center">
                   <div
                     className={`px-3 py-1 rounded-full text-sm ${
@@ -309,7 +268,7 @@ const UserOrders = () => {
                           )
                         ? "bg-green-100 text-green-600"
                         : order.status === "Canceled"
-                        ? "bg-red-100 text-red-600" // Menambahkan warna merah untuk status Canceled
+                        ? "bg-red-100 text-red-600"
                         : "bg-gray-100 text-gray-600"
                     }`}
                   >
@@ -317,7 +276,6 @@ const UserOrders = () => {
                   </div>
                 </div>
 
-                {/* Tombol Cancel Order jika status Paid */}
                 {order.status === "Paid" && (
                   <button
                     onClick={() => confirmCancelOrder(order)}
@@ -327,7 +285,6 @@ const UserOrders = () => {
                   </button>
                 )}
 
-                {/* Tombol Returned dan Completed jika status Shipped */}
                 {order.status === "Shipped" && (
                   <div className="flex gap-2">
                     <button
@@ -345,7 +302,6 @@ const UserOrders = () => {
                   </div>
                 )}
 
-                {/* Tombol View Details */}
                 <button
                   onClick={() => handleViewDetails(order)}
                   className="border px-3 py-2 text-xs font-medium rounded-sm hover:bg-gray-100 transition"
@@ -358,20 +314,17 @@ const UserOrders = () => {
         </div>
       )}
 
-      {/* Detail Pesanan */}
       {selectedOrder && (
         <div
           id="modal-overlay"
           className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out"
           onClick={handleClickOutside}
         >
-          {/* Modal Full Screen dengan transisi dari bawah ke atas */}
           <div
             className={`bg-white ${
               isModalVisible ? "translate-y-0" : "translate-y-full"
             } md:rounded-md overflow-auto shadow-lg w-full max-w-screen-md h-full md:h-auto p-6 relative transform transition-transform duration-700 ease-in-out`}
           >
-            {/* Tombol Close di pojok kanan */}
             <button
               onClick={closeDetailsWithAnimation}
               className="absolute top-4 right-4 text-gray-600 hover:text-gray-800"
@@ -379,12 +332,10 @@ const UserOrders = () => {
               <FaTimes className="w-6 h-6" />
             </button>
 
-            {/* Order Details Title */}
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold">Order Details</h2>
             </div>
 
-            {/* Shipping Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Shipping Information</h3>
               <div className="flex items-center">
@@ -411,7 +362,6 @@ const UserOrders = () => {
               </div>
             </div>
 
-            {/* Order Summary */}
             <div className="mt-6">
               <h3 className="text-lg font-medium">Order Summary</h3>
               {selectedOrder.items.map((item, index) => (
@@ -430,7 +380,6 @@ const UserOrders = () => {
                       <p className="text-sm text-gray-500">Size: {item.size}</p>
                     </div>
                   </div>
-                  {/* Order Status berada di tengah */}
                   <div className="flex items-center justify-center">
                     <div
                       className={`px-3 py-1 rounded-full text-sm ${
@@ -444,7 +393,7 @@ const UserOrders = () => {
                             ].includes(selectedOrder.status)
                           ? "bg-green-100 text-green-600"
                           : selectedOrder.status === "Canceled"
-                          ? "bg-red-100 text-red-600" // Status merah untuk Canceled
+                          ? "bg-red-100 text-red-600"
                           : "bg-gray-100 text-gray-600"
                       }`}
                     >
@@ -464,7 +413,6 @@ const UserOrders = () => {
               ))}
             </div>
 
-            {/* Total Amount di pojok kanan */}
             <div className="mt-6 flex justify-end">
               <div className="text-right">
                 <h3 className="text-lg font-medium">Total Amount</h3>
@@ -474,7 +422,7 @@ const UserOrders = () => {
                     selectedOrder.items.reduce(
                       (total, item) => total + item.price * item.quantity,
                       0
-                    ) + delivery_fee // Sudah memasukkan delivery_fee
+                    ) + delivery_fee
                   )}
                 </p>
               </div>
@@ -483,7 +431,6 @@ const UserOrders = () => {
         </div>
       )}
 
-      {/* Modal Konfirmasi Cancel Order */}
       {isCancelModalVisible && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-md shadow-lg max-w-sm w-full">
@@ -508,13 +455,11 @@ const UserOrders = () => {
         </div>
       )}
 
-      {/* Modal Review */}
       {isReviewModalVisible && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-md shadow-lg max-w-md w-full">
             <h3 className="text-lg font-medium mb-4">Leave a Review</h3>
 
-            {/* Rating Stars */}
             <div className="flex items-center mb-4">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -531,7 +476,6 @@ const UserOrders = () => {
               ))}
             </div>
 
-            {/* Review Text */}
             <textarea
               className="w-full p-2 border rounded-md mb-4"
               placeholder="Write your review"
@@ -541,7 +485,6 @@ const UserOrders = () => {
               }
             />
 
-            {/* Optional: Upload Image */}
             <input
               type="file"
               accept="image/*"

@@ -4,10 +4,8 @@ import Title from "../components/Title";
 import { format } from "date-fns";
 import { formatPrice } from "../utils/formatPrice";
 import { assets } from "../assets/assets";
-import io from "socket.io-client";
 
-// Set up socket connection
-const socket = io("https://ecommerce-backend-ebon-six.vercel.app/");
+// Socket connection dihapus dan digantikan dengan polling berkala
 
 const Orders = () => {
   const {
@@ -15,7 +13,6 @@ const Orders = () => {
     updateOrderStatus,
     fetchOrders,
     deleteOrder,
-    setOrders,
     delivery_fee,
   } = useContext(ShopContext);
   const [filteredStatus, setFilteredStatus] = useState("All");
@@ -26,28 +23,20 @@ const Orders = () => {
     const token = localStorage.getItem("authToken");
 
     if (token) {
-      fetchOrders(token);
+      fetchOrders(token); // Fetch orders on initial render
     }
 
-    // Mendengarkan event orderUpdated
-    socket.on("orderUpdated", () => {
+    // Set up polling to fetch orders every 10 seconds
+    const intervalId = setInterval(() => {
       if (token) {
-        fetchOrders(token); // Fetch ulang pesanan jika ada perubahan status
+        fetchOrders(token); // Fetch orders periodically
       }
-    });
-
-    // Mendengarkan event orderDeleted
-    socket.on("orderDeleted", ({ orderId }) => {
-      setOrders((prevOrders) =>
-        prevOrders.filter((order) => order._id !== orderId)
-      );
-    });
+    }, 10000); // Polling interval set to 10 seconds (adjust as needed)
 
     return () => {
-      socket.off("orderUpdated");
-      socket.off("orderDeleted");
+      clearInterval(intervalId); // Clear the interval when the component unmounts
     };
-  }, [fetchOrders, setOrders]);
+  }, [fetchOrders]);
 
   const handleStatusChange = async (orderId, newStatus) => {
     await updateOrderStatus(orderId, newStatus);
@@ -310,7 +299,7 @@ const Orders = () => {
                         order.items.reduce(
                           (total, item) => total + item.price * item.quantity,
                           0
-                        ) + delivery_fee 
+                        ) + delivery_fee
                       )}
                     </span>
                   </div>
