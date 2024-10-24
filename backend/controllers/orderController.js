@@ -1,5 +1,5 @@
 const Order = require("../models/Order");
-const socket = require("../socket"); // Import socket.js to get the instance of io
+// const socket = require("../socket"); 
 
 // Fungsi untuk membuat order baru
 exports.createOrder = async (req, res) => {
@@ -102,8 +102,8 @@ exports.updateOrderStatus = async (req, res) => {
     await order.save();
 
     // Emit event untuk memberitahukan ke client bahwa pesanan telah diperbarui
-    const io = socket.getIO();
-    io.emit("orderUpdated", { orderId, status });
+    // const io = socket.getIO();
+    // io.emit("orderUpdated", { orderId, status });
 
     res.status(200).json({ message: "Order status updated", order });
   } catch (error) {
@@ -129,8 +129,8 @@ exports.deleteOrder = async (req, res) => {
     }
 
     // Emit event untuk memberitahukan ke client bahwa pesanan telah dihapus
-    const io = socket.getIO(); // Pastikan Anda mendapatkan instance io
-    io.emit("orderDeleted", { orderId });
+    // const io = socket.getIO();
+    // io.emit("orderDeleted", { orderId });
 
     res.status(200).json({ message: "Order deleted successfully", order });
   } catch (error) {
