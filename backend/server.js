@@ -3,7 +3,6 @@ const cors = require("cors");
 require("dotenv").config();
 const connectDB = require("./config/db");
 const { createServer } = require("http");
-// const socket = require("./socket");
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -19,9 +18,6 @@ connectDB();
 // Create HTTP Server
 const httpServer = createServer(app);
 
-// Initialize Socket.IO
-const io = socket.init(httpServer);
-
 // Routes
 app.use("/api/products", require("./routes/productRouter"));
 app.use("/api/user", require("./routes/userRouter"));
@@ -32,11 +28,28 @@ httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-// Socket.IO Connection
-// io.on("connection", (socket) => {
-//   console.log("A user connected:", socket.id);
 
-//   socket.on("disconnect", () => {
-//     console.log("User disconnected:", socket.id);
-//   });
-// });
+// MongoDB Connection
+console.log('Attempting MongoDB connection...');
+connectDB();
+console.log('MongoDB connection attempted');
+
+// Routes
+console.log('Setting up routes...');
+app.use("/api/products", (req, res, next) => {
+  console.log("Accessing /api/products");
+  next();
+}, require("./routes/productRouter"));
+app.use("/api/user", (req, res, next) => {
+  console.log("Accessing /api/user");
+  next();
+}, require("./routes/userRouter"));
+app.use("/api/cart", (req, res, next) => {
+  console.log("Accessing /api/cart");
+  next();
+}, require("./routes/cartRouter"));
+app.use("/api/orders", (req, res, next) => {
+  console.log("Accessing /api/orders");
+  next();
+}, require("./routes/orderRouter"));
+
