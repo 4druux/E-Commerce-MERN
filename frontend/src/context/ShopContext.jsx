@@ -117,38 +117,40 @@ const ShopContextProvider = (props) => {
     }
 
     fetchProducts();
-  }, [fetchCartData, fetchOrders, navigate]);
+  }, [fetchCartData, fetchOrders, navigate, ]);
 
   const fetchProducts = async () => {
     try {
       const response = await axios.get(
         "https://ecommerce-backend-ebon-six.vercel.app/api/products/all"
       );
-      setProducts(response.data);
-    } catch {
+      setProducts(response.data); // Pastikan ini memperbarui state produk
+    } catch (error) {
+      console.error("Failed to load products:", error);
       toast.error("Failed to load products.");
     }
   };
+  
 
   const addToCart = async (itemId, size, price, name) => {
     if (!isLoggedIn) {
       navigate("/login");
       return;
     }
-
+  
     try {
       const token = localStorage.getItem("authToken");
-
+  
       const productResponse = await axios.get(
         `https://ecommerce-backend-ebon-six.vercel.app/api/products/${itemId}`
       );
       const product = productResponse.data;
-
+  
       const imageUrl =
         product.image && product.image.length > 0
           ? product.image[0]
           : "/placeholder-image.png";
-
+  
       const dataToSend = {
         productId: itemId,
         size,
@@ -157,19 +159,21 @@ const ShopContextProvider = (props) => {
         name,
         imageUrl,
       };
-
+  
       const response = await axios.post(
         "https://ecommerce-backend-ebon-six.vercel.app/api/cart/add",
         dataToSend,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
+  
       setCartItems(response.data.items);
+      fetchProducts(); // Memperbarui produk setelah interaksi
     } catch (error) {
       console.error("Failed to add item to cart:", error);
       toast.error("Failed to add item to cart.");
     }
   };
+  
 
   const updateQuantity = async (itemId, size, quantity) => {
     if (!isLoggedIn) {
