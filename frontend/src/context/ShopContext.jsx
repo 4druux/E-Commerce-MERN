@@ -3,11 +3,11 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
-import io from "socket.io-client"; // Import socket.io client
+// import io from "socket.io-client"; 
 
 export const ShopContext = createContext();
 
-const socket = io("https://ecommerce-backend-ebon-six.vercel.app"); // Set up socket connection
+// const socket = io("https://ecommerce-backend-ebon-six.vercel.app"); 
 
 const ShopContextProvider = (props) => {
   const currency = "Rp";
@@ -224,7 +224,7 @@ const ShopContextProvider = (props) => {
       );
 
       // Emit event to notify about the status update
-      socket.emit("orderUpdated", { orderId, status: newStatus });
+      // socket.emit("orderUpdated", { orderId, status: newStatus });
 
       // Fetch ulang pesanan setelah status diperbarui
       fetchOrders();
@@ -286,7 +286,7 @@ const ShopContextProvider = (props) => {
       );
 
       // Emit event to notify about the cancelation
-      socket.emit("orderUpdated", { orderId, status: "Canceled" });
+      // socket.emit("orderUpdated", { orderId, status: "Canceled" });
 
       // Refresh pesanan setelah pembatalan
       fetchOrders();
@@ -304,7 +304,7 @@ const ShopContextProvider = (props) => {
       });
 
       // Emit event to notify about the deletion
-      socket.emit("orderDeleted", { orderId });
+      // socket.emit("orderDeleted", { orderId });
 
       fetchOrders(); // Perbarui daftar pesanan setelah penghapusan
       toast.success("Order berhasil dihapus!");
