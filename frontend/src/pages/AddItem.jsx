@@ -146,23 +146,22 @@ const AddItem = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-  
+
     let formattedValue = value;
-  
+
     if (name === "price") {
       if (value === "") {
         formattedValue = ""; // Kosongkan input jika tidak ada angka
       } else {
-        formattedValue = formatPrice(value.replace(/^0+/, '')); // Hilangkan awalan nol dan format harga
+        formattedValue = formatPrice(value.replace(/^0+/, "")); // Hilangkan awalan nol dan format harga
       }
     }
-  
+
     setFormData((prevState) => ({
       ...prevState,
       [name]: formattedValue,
     }));
   };
-  
 
   const convertToBase64 = (file) => {
     return new Promise((resolve, reject) => {
@@ -183,11 +182,14 @@ const AddItem = () => {
         .map((image) => convertToBase64(image));
       const imageUrls = await Promise.all(imagePromises);
 
-      await axios.post("http://localhost:5001/api/products/add", {
-        ...formData,
-        price: unformatPrice(formData.price), // Menghapus tanda titik sebelum menyimpan ke database
-        image: imageUrls,
-      });
+      await axios.post(
+        "https://ecommerce-backend-ebon-six.vercel.app/api/products/add",
+        {
+          ...formData,
+          price: unformatPrice(formData.price), // Menghapus tanda titik sebelum menyimpan ke database
+          image: imageUrls,
+        }
+      );
 
       toast.success("Product added successfully!", {
         position: "top-right",
