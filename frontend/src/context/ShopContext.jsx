@@ -216,7 +216,7 @@ const ShopContextProvider = (props) => {
       const token = localStorage.getItem("authToken");
 
       await axios.put(
-        "https:localhost:5001/api/orders/status",
+        "https://ecommerce-backend-ebon-six.vercel.app/api/orders/status",
         { orderId, status: newStatus },
         {
           headers: { Authorization: `Bearer ${token}` },
