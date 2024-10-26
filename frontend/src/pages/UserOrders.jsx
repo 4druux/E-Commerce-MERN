@@ -19,7 +19,6 @@ const UserOrders = () => {
     currency,
     delivery_fee,
     fetchOrders,
-    fetchProducts,
     cancelOrder,
     updateOrderStatus,
   } = useContext(ShopContext);
@@ -153,9 +152,10 @@ const UserOrders = () => {
       );
 
       await updateOrderStatus(currentOrderForReview._id, "Completed");
-      await fetchProducts();  // Tambahkan ini agar produk diperbarui setelah review
-
       
+      toast.success(
+        "Review submitted and order marked as completed successfully!"
+      );
       setIsReviewModalVisible(false);
     } catch (error) {
       console.error("Failed to submit review:", error);
