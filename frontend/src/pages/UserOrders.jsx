@@ -30,6 +30,8 @@ const UserOrders = () => {
   const [orderToCancel, setOrderToCancel] = useState(null);
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
   const [currentOrderForReview, setCurrentOrderForReview] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
   const [reviewData, setReviewData] = useState({
     rating: 0,
     review: "",
@@ -127,6 +129,7 @@ const UserOrders = () => {
 
   const handleReviewSubmit = async (event) => {
     event.preventDefault();
+    setIsLoading(true); // Mulai loading
     const token = localStorage.getItem("authToken");
 
     const formData = {
@@ -159,6 +162,8 @@ const UserOrders = () => {
     } catch (error) {
       console.error("Failed to submit review:", error.response?.data || error);
       toast.error("Failed to submit review.");
+    } finally {
+      setIsLoading(false); // Hentikan loading
     }
   };
 
@@ -560,6 +565,11 @@ const UserOrders = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
         </div>
       )}
     </div>

@@ -92,15 +92,6 @@ const Payment = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Tampilkan indikator loading
-  if (isLoading) {
-    return (
-      <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
-        <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col sm:flex-row justify-between gap-4 pt-4 sm:pt-14 min-h-[80vh] border-t w-full px-0 sm:px-0">
       <div className="w-full max-w-full mx-auto">
@@ -246,6 +237,12 @@ const Payment = () => {
           </button>
         </div>
       </div>
+      {/* Overlay Loading */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+          <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
+        </div>
+      )}
     </div>
   );
 };
