@@ -12,7 +12,7 @@ const About = () => {
   }, []);
 
   return isLoading ? (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
       <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
     </div>
   ) : (
