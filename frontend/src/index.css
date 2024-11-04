@@ -44,13 +44,12 @@ a.active hr {
 }
 
 .spinner-border {
-  border-top-color: transparent;
-  border-right-color: transparent;
-  border-bottom-color: white;
-  border-left-color: white;
+  border-top-color: rgb(236, 236, 236);
+  border-right-color: rgb(236, 236, 236);
+  border-bottom-color: rgb(236, 236, 236);
+  border-left-color: transparent;
 }
 
-/* Menghilangkan spinner di semua browser */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -61,14 +60,66 @@ input[type="number"] {
   -moz-appearance: textfield; /* Firefox */
 }
 
+/* custom toastify */
 .custom-toast {
-  max-width: 300px; /* Menyesuaikan lebar toast */
-  margin-left: auto; /* Membuat margin kiri otomatis sehingga toast berada di kanan */
-  margin-right: 1rem; /* Jarak dari kanan */
-  top: 1rem; /* Jarak dari atas */
+  max-width: 300px;
+  margin-left: auto;
+  margin-right: 1rem;
+  top: 1rem;
 }
 
-.checkmark-container {
+/* custom sweet alert */
+.custom-title {
+  font-size: 30px !important;
+  font-weight: 700 !important;
+  color: #333 !important;
+  margin-bottom: 5px !important;
+}
+
+.custom-confirm-button {
+  font-size: 16px;
+  font-weight: 600;
+  padding: 10px 25px;
+  background-color: #333 !important;
+  color: #fff !important;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.custom-confirm-button:hover {
+  background-color: #111111 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.custom-popup {
+  width: 500px;
+  padding: 30px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  animation: popup-fadein 0.5s ease;
+}
+
+.custom-backdrop {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(5px);
+}
+
+@keyframes popup-fadein {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* .checkmark-container {
   display: flex;
   justify-content: center;
   margin-bottom: 16px;
@@ -113,4 +164,4 @@ input[type="number"] {
   50% {
     transform: scale3d(1.1, 1.1, 1);
   }
-}
+} */

@@ -63,9 +63,9 @@ const Footer = () => {
             <img src={assets.bni_icon} alt="BNI" className="h-8 " />
             <img src={assets.bri_icon} alt="BRI" className="h-8 " />
             <img src={assets.mandiri_icon} alt="Mandiri" className="h-8 " />
-            <img src={assets.qris_icon} alt="QRIS" className="h-8 " />
             <img src={assets.indomart_icon} alt="Indomart" className="h-8 " />
             <img src={assets.alfamart_icon} alt="Alfamart" className="h-8 " />
+            <img src={assets.qris_icon} alt="QRIS" className="h-8 " />
           </div>
         </div>
       </div>

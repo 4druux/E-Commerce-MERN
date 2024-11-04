@@ -322,7 +322,7 @@ const ReviewItem = () => {
       return ratingMatches && sizeMatches && imageMatches;
     });
 
-    if (selectedDateFilter === "latest") {
+    if (selectedDateFilter === "" || selectedDateFilter === "latest") {
       return filtered.sort(
         (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
       );
@@ -357,7 +357,11 @@ const ReviewItem = () => {
 
   // Renders
   if (loading) {
-    return <p>Loading...</p>;
+    return (
+      <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+        <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
+      </div>
+    );
   }
 
   return (

@@ -3,11 +3,11 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
-// import io from "socket.io-client"; 
+// import io from "socket.io-client";
 
 export const ShopContext = createContext();
 
-// const socket = io("https://ecommerce-backend-ebon-six.vercel.app"); 
+// const socket = io("http://localhost:5001");
 
 const ShopContextProvider = (props) => {
   const currency = "Rp";
@@ -23,9 +23,12 @@ const ShopContextProvider = (props) => {
   const fetchCartData = useCallback(
     async (token) => {
       try {
-        const response = await axios.get("https://ecommerce-backend-ebon-six.vercel.app/api/cart", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axios.get(
+          "https://ecommerce-backend-ebon-six.vercel.app/api/cart",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         setCartItems(response.data.items);
       } catch (error) {
         if (error.response && error.response.status === 401) {
@@ -264,7 +267,7 @@ const ShopContextProvider = (props) => {
     setCartItems([]); // Hapus data keranjang
     setOrders([]); // Kosongkan pesanan
     toast.success("Logout successful!");
-    navigate("/"); // Arahkan kembali ke halaman login
+    navigate("/login"); // Arahkan kembali ke halaman login
   };
 
   const saveOrder = (order) => {
@@ -299,9 +302,12 @@ const ShopContextProvider = (props) => {
     try {
       const token = localStorage.getItem("authToken");
 
-      await axios.delete(`https://ecommerce-backend-ebon-six.vercel.app/api/orders/${orderId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.delete(
+        `https://ecommerce-backend-ebon-six.vercel.app/api/orders/${orderId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       // Emit event to notify about the deletion
       // socket.emit("orderDeleted", { orderId });

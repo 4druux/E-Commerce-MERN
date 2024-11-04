@@ -22,6 +22,7 @@ const Cart = () => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [showDelete, setShowDelete] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isLoading, setIsLoading] = useState(true); // State untuk loading
 
   useEffect(() => {
     const fetchCartData = async () => {
@@ -36,8 +37,10 @@ const Cart = () => {
         if (location.state?.selectedItems) {
           setSelectedItems(location.state.selectedItems);
         }
+        setIsLoading(false); // Hentikan loading setelah data berhasil diterima
       } catch (error) {
         console.error("Failed to fetch cart data", error);
+        setIsLoading(false); // Hentikan loading jika terjadi error
       }
     };
 
@@ -134,6 +137,14 @@ const Cart = () => {
       handleQuantityChange(itemId, size, currentQuantity - 1);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-black opacity-50  flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+        <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="border-t pt-14">

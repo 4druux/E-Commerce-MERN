@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect, useRef } from "react";
 import { ShopContext } from "../context/ShopContext";
 import Title from "../components/Title";
 import { format } from "date-fns";
@@ -8,41 +8,43 @@ import { assets } from "../assets/assets";
 // Socket connection dihapus dan digantikan dengan polling berkala
 
 const Orders = () => {
-  const {
-    orders,
-    updateOrderStatus,
-    fetchOrders,
-    deleteOrder,
-    delivery_fee,
-  } = useContext(ShopContext);
+  const { orders, updateOrderStatus, fetchOrders, deleteOrder, delivery_fee } =
+    useContext(ShopContext);
   const [filteredStatus, setFilteredStatus] = useState("All");
   const [showModal, setShowModal] = useState(false); // Modal visibility
   const [orderToDelete, setOrderToDelete] = useState(null); // Order selected for deletion
+  const [isLoading, setIsLoading] = useState(true); // Loading untuk load awal
+  const [isUpdating, setIsUpdating] = useState(false); // Loading untuk operasi status update
+
+  const intervalRef = useRef(null); // Gunakan ref untuk polling interval
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
 
-    if (token) {
-      fetchOrders(token); // Fetch orders on initial render
-    }
-
-    // Set up polling to fetch orders every 10 seconds
-    const intervalId = setInterval(() => {
+    const fetchAndSetOrders = async (showLoading = true) => {
       if (token) {
-        fetchOrders(token); // Fetch orders periodically
+        if (showLoading) setIsLoading(true); // Hanya tampilkan loading pada fetch manual
+        await fetchOrders(token);
+        setIsLoading(false);
       }
-    }, 10000); // Polling interval set to 10 seconds (adjust as needed)
-
-    return () => {
-      clearInterval(intervalId); // Clear the interval when the component unmounts
     };
+
+    fetchAndSetOrders(); // Panggil saat pertama kali render
+
+    // Polling untuk fetch data setiap 10 detik tanpa loading indicator
+    intervalRef.current = setInterval(() => {
+      fetchAndSetOrders(false); // Tidak tampilkan loading saat polling otomatis
+    }, 10000);
+
+    return () => clearInterval(intervalRef.current); // Bersihkan interval saat unmount
   }, [fetchOrders]);
 
   const handleStatusChange = async (orderId, newStatus) => {
+    setIsUpdating(true); // Tampilkan loading hanya saat update status
     await updateOrderStatus(orderId, newStatus);
-    // Fetch updated orders after changing status
     const token = localStorage.getItem("authToken");
-    fetchOrders(token);
+    await fetchOrders(token);
+    setIsUpdating(false); // Akhiri loading setelah update selesai
   };
 
   // Open confirmation modal for deleting an order
@@ -60,10 +62,12 @@ const Orders = () => {
   // Confirm and delete the order
   const confirmDelete = async () => {
     if (orderToDelete) {
+      setIsUpdating(true); // Tampilkan loading saat menghapus
       await deleteOrder(orderToDelete);
       const token = localStorage.getItem("authToken");
-      fetchOrders(token); // Refetch orders after deletion
-      setShowModal(false); // Close modal
+      await fetchOrders(token);
+      setIsUpdating(false); // Akhiri loading setelah selesai
+      setShowModal(false);
     }
   };
 
@@ -88,6 +92,15 @@ const Orders = () => {
         return "bg-gray-100 text-gray-600"; // Warna default jika status tidak dikenal
     }
   };
+
+  if (isLoading) {
+    // Loading hanya muncul saat load awal
+    return (
+      <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50">
+        <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="px-0 sm:px-4 lg:px-0">
@@ -337,6 +350,11 @@ const Orders = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+      {isUpdating && (
+        <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50">
+          <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
         </div>
       )}
     </div>
