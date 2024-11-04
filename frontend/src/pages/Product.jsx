@@ -25,6 +25,8 @@ const Product = () => {
   const [reviews, setReviews] = useState([]);
 
   // Filter Review Product
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [selectedReviewImage, setSelectedReviewImage] = useState("");
   const [averageRating, setAverageRating] = useState(0);
   const [selectedRatingFilter, setSelectedRatingFilter] = useState(0);
   const [selectedSizeFilter, setSelectedSizeFilter] = useState("");
@@ -37,6 +39,8 @@ const Product = () => {
   const ratingDropdownRef = useRef(null);
   const sizeDropdownRef = useRef(null);
   const dateDropdownRef = useRef(null);
+
+  const [isLoading, setIsLoading] = useState(true); // Loading dimulai dengan true
 
   const navigate = useNavigate();
   const allSizes = ["S", "M", "L", "XL", "XXL"];
@@ -52,6 +56,7 @@ const Product = () => {
   useEffect(() => {
     const fetchProductData = async () => {
       try {
+        setIsLoading(true); // Mulai loading sebelum request
         const response = await axios.get(
           `https://ecommerce-backend-ebon-six.vercel.app/api/products/${productId}`
         );
@@ -62,9 +67,11 @@ const Product = () => {
 
         const avgRating = calculateAverageRating(product.reviews || []);
         setAverageRating(avgRating);
+        setIsLoading(false); // Stop loading setelah data berhasil diambil
       } catch (error) {
         console.error("Failed to fetch product data", error);
         toast.error("Failed to load product.", { autoClose: 2000 });
+        setIsLoading(false); // Stop loading jika terjadi error
       }
     };
 
@@ -103,9 +110,8 @@ const Product = () => {
     };
   }, []);
 
-  // Effect no scroll when modal img open
   useEffect(() => {
-    if (isModalOpen) {
+    if (isModalOpen || isReviewModalOpen) {
       document.body.style.overflow = "hidden"; // Disable scrolling
     } else {
       document.body.style.overflow = "unset"; // Enable scrolling
@@ -115,7 +121,7 @@ const Product = () => {
     return () => {
       document.body.style.overflow = "unset";
     };
-  }, [isModalOpen]);
+  }, [isModalOpen, isReviewModalOpen]);
 
   // Fungsi untuk membuka modal img
   const openModal = () => {
@@ -125,6 +131,15 @@ const Product = () => {
   // Fungsi untuk menutup modal img
   const closeModal = () => {
     setIsModalOpen(false);
+  };
+
+  const openReviewModal = (image) => {
+    setSelectedReviewImage(image);
+    setIsReviewModalOpen(true);
+  };
+
+  const closeReviewModal = () => {
+    setIsReviewModalOpen(false);
   };
 
   // Fungsi Input Size
@@ -363,7 +378,7 @@ const Product = () => {
       return ratingMatches && sizeMatches && imageMatches;
     });
 
-    if (selectedDateFilter === "latest") {
+    if (selectedDateFilter === "" || selectedDateFilter === "latest") {
       return filtered.sort(
         (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
       );
@@ -400,7 +415,7 @@ const Product = () => {
     <div className="border-t-2 pt-10 transition-opacity ease-in duration-500 opacity-100">
       <div className="flex flex-col lg:flex-row md:flex-row gap-12">
         <div className="flex-1 flex flex-col-reverse lg:flex-row md:flex-row gap-3">
-          <div className="flex lg:flex-col md:flex-col overflow-x-auto lg:overflow-y-scroll md:overflow-y-scroll justify-between lg:justify-normal md:justify-normal lg:w-[18.7%] md:w-[18.7%] w-full">
+          <div className="flex lg:flex-col md:flex-col overflow-x-auto lg:overflow-y-scroll md:overflow-y-scroll justify-start lg:justify-normal md:justify-normal lg:w-[18.7%] md:w-[18.7%] w-full gap-1">
             {productData.image.map((item, index) => (
               <img
                 onMouseEnter={() => {
@@ -721,7 +736,8 @@ const Product = () => {
                         key={imgIndex}
                         src={img}
                         alt={`Review Image ${imgIndex + 1}`}
-                        className="w-16 h-16 object-cover rounded"
+                        className="w-24 h-24 object-cover rounded cursor-pointer"
+                        onClick={() => openReviewModal(img)}
                       />
                     ))}
                   </div>
@@ -750,15 +766,36 @@ const Product = () => {
         </div>
       </div>
 
+      {isReviewModalOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
+          onClick={closeReviewModal}
+        >
+          <img
+            src={selectedReviewImage}
+            alt="Full Review View"
+            className="w-auto h-auto max-h-[90%] max-w-[90%] rounded"
+          />
+          <button
+            className="absolute top-5 right-5 text-white text-3xl"
+            onClick={closeReviewModal}
+          >
+            &times;
+          </button>
+        </div>
+      )}
+
       <RelatedProducts
         category={productData.category}
         subCategory={productData.subCategory}
       />
     </div>
   ) : (
-    <div className="text-center mt-10">
-      <h2>Loading...</h2>
-    </div>
+    isLoading && (
+      <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+        <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
+      </div>
+    )
   );
 };
 

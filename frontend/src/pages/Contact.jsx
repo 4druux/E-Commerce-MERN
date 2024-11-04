@@ -1,10 +1,21 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Title from "../components/Title";
 import { assets } from "../assets/assets";
 import NewsletterBox from "../components/NewsletterBox";
 
 const Contact = () => {
-  return (
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return isLoading ? (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  ) : (
     <div>
       <div className="text-center text-2xl pt-8 border-t">
         <Title text1={"CONTACT"} text2={"US"} />

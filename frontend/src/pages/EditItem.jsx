@@ -41,7 +41,7 @@ const EditItem = () => {
 
   const [originalData, setOriginalData] = useState(null); // Store the original data
   const [isChanged, setIsChanged] = useState(false); // Track changes
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Track loading
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -205,6 +205,7 @@ const EditItem = () => {
       };
     });
   };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
@@ -266,10 +267,8 @@ const EditItem = () => {
         className: "custom-toast",
       });
 
-      setTimeout(() => {
-        setIsLoading(false); // Stop loading
-        navigate("/admin/list"); // Navigate after loading stops
-      }, 1500);
+      setIsLoading(false); // Stop loading after success
+      navigate("/admin/list"); // Navigate to list page after success
     } catch (error) {
       console.error("Failed to update product", error);
       toast.error("Failed to update product.", {
@@ -559,7 +558,7 @@ const EditItem = () => {
       </form>
       <ToastContainer />
       {isLoading && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+        <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
           <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
         </div>
       )}

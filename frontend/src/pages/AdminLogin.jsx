@@ -1,16 +1,17 @@
 import React, { useState } from "react";
 import axios from "axios"; // Gunakan axios untuk login request
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(""); // Menyimpan pesan kesalahan
   const navigate = useNavigate();
 
   const onSubmitHandler = async (event) => {
     event.preventDefault();
+    setErrorMessage(""); // Reset pesan kesalahan sebelum proses login
 
     try {
       const response = await axios.post(
@@ -24,17 +25,22 @@ const AdminLogin = () => {
       const { token, role, expiresIn } = response.data; // Ambil token dan waktu kadaluwarsa dari respons
       const expirationTime = new Date().getTime() + expiresIn * 1000; // Hitung waktu kadaluwarsa token
 
+      // Simpan token dan role ke localStorage
       localStorage.setItem("authToken", token);
       localStorage.setItem("userRole", role); // Simpan role pengguna
       localStorage.setItem("tokenExpiration", expirationTime); // Simpan waktu kadaluwarsa token
 
       if (role === "admin") {
-        navigate("/admin/orders"); // Arahkan ke halaman admin
+        navigate("/admin/orders"); // Arahkan ke halaman admin jika role admin
       } else {
-        toast.error("You do not have admin privileges.");
+        setErrorMessage("You do not have admin privileges."); // Tampilkan pesan jika bukan admin
       }
-    } catch {
-      toast.error("Login failed. Please try again.");
+    } catch (error) {
+      if (error.response && error.response.status === 401) {
+        setErrorMessage("Invalid email or password."); // Tampilkan pesan error jika kredensial salah
+      } else {
+        setErrorMessage("Login failed. Please try again."); // Pesan fallback jika terjadi error lain
+      }
     }
   };
 
@@ -47,6 +53,12 @@ const AdminLogin = () => {
         <p className="prata-regular text-3xl">Login</p>
         <hr className="border-none h-[1.5px] w-8 bg-gray-800" />
       </div>
+
+      {errorMessage && (
+        <div className="w-full text-center text-red-700 bg-red-100 border border-red-300 px-4 py-2 rounded">
+          {errorMessage}
+        </div>
+      )}
 
       <input
         className="w-full px-3 py-2 border border-gray-800"

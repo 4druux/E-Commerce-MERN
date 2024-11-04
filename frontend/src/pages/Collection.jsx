@@ -13,6 +13,7 @@ const Collection = () => {
   const [subCategory, setSubCategory] = useState([]);
   const [sortType, setSortType] = useState("relavent");
   const [showFilter, setShowFilter] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // State untuk loading
 
   // Fetch products from backend
   useEffect(() => {
@@ -22,8 +23,10 @@ const Collection = () => {
           "https://ecommerce-backend-ebon-six.vercel.app/api/products/all"
         );
         setProducts(response.data);
+        setIsLoading(false); // Matikan loading setelah data berhasil diterima
       } catch (error) {
         console.error("Failed to fetch products", error);
+        setIsLoading(false); // Matikan loading jika terjadi error
       }
     };
 
@@ -91,6 +94,15 @@ const Collection = () => {
     const sorted = sortProduct(filtered);
     setFilterProducts(sorted);
   }, [applyFilter, sortProduct]);
+
+  // Render loading spinner while fetching data
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+        <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col sm:flex-row gap-1 sm:gap-10 pt-10 border-t">
@@ -199,8 +211,8 @@ const Collection = () => {
           </select>
         </div>
 
-        {/* Conditional Rendering: Show message if no products found */}
-        {filterProducts.length === 0 ? (
+        {/* Conditional Rendering: Show message if search does not find any results */}
+        {showSearch && search && filterProducts.length === 0 ? (
           <div className="flex flex-col items-center justify-center mt-10 h-96">
             <div className="flex items-center">
               <img

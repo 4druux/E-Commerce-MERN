@@ -11,6 +11,7 @@ const ListItems = () => {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [productsPerPage] = useState(20);
+  const [isLoading, setIsLoading] = useState(true); // Tambahkan state loading
 
   // Pertahankan fungsi yang diminta
   const [category, setCategory] = useState([]);
@@ -25,6 +26,7 @@ const ListItems = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+        setIsLoading(true); // Mulai loading
         const response = await axios.get(
           "https://ecommerce-backend-ebon-six.vercel.app/api/products/all"
         );
@@ -32,6 +34,8 @@ const ListItems = () => {
         setFilteredProducts(response.data);
       } catch (error) {
         console.error("Gagal mendapatkan produk", error);
+      } finally {
+        setIsLoading(false); // Akhiri loading
       }
     };
 
@@ -134,6 +138,15 @@ const ListItems = () => {
       });
     }, 0);
   };
+
+  if (isLoading) {
+    // Loading indicator saat data masih diambil
+    return (
+      <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+        <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
+      </div>
+    );
+  }
 
   return (
     <div>

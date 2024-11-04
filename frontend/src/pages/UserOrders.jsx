@@ -4,6 +4,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import Title from "../components/Title";
 import { format } from "date-fns";
+import { assets } from "../assets/assets";
 import { formatPrice } from "../utils/formatPrice";
 import {
   FaUser,
@@ -19,7 +20,6 @@ const UserOrders = () => {
     currency,
     delivery_fee,
     fetchOrders,
-    fetchProducts,
     cancelOrder,
     updateOrderStatus,
   } = useContext(ShopContext);
@@ -153,12 +153,11 @@ const UserOrders = () => {
       );
 
       await updateOrderStatus(currentOrderForReview._id, "Completed");
-      await fetchProducts();  // Tambahkan ini agar produk diperbarui setelah review
 
-      
       setIsReviewModalVisible(false);
+      fetchOrders();
     } catch (error) {
-      console.error("Failed to submit review:", error);
+      console.error("Failed to submit review:", error.response?.data || error);
       toast.error("Failed to submit review.");
     }
   };
@@ -458,15 +457,18 @@ const UserOrders = () => {
 
       {isReviewModalVisible && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-md shadow-lg max-w-md w-full">
-            <h3 className="text-lg font-medium mb-4">Leave a Review</h3>
+          <div className="bg-white p-8 rounded-lg shadow-xl max-w-lg w-full relative">
+            <h3 className="text-xl font-semibold mb-4 text-gray-800">
+              Leave a Review
+            </h3>
 
-            <div className="flex items-center mb-4">
+            {/* Rating Stars */}
+            <div className="flex items-center mb-4 space-x-1">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
                   onClick={() => setReviewData({ ...reviewData, rating: star })}
-                  className={`text-xl ${
+                  className={`text-2xl ${
                     reviewData.rating >= star
                       ? "text-yellow-400"
                       : "text-gray-300"
@@ -477,8 +479,64 @@ const UserOrders = () => {
               ))}
             </div>
 
+            {/* Image Upload and Preview */}
+            <div className="flex flex-wrap gap-4 mb-4">
+              {reviewData.images.map((image, index) => (
+                <div
+                  key={index}
+                  className="relative w-32 h-32 md:w-40 md:h-40 lg:w-32 lg:h-32"
+                >
+                  <div className="w-full h-full border border-gray-300 bg-gray-100 flex items-center justify-center relative">
+                    <img
+                      src={URL.createObjectURL(image)}
+                      alt={`Preview ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setReviewData((prev) => ({
+                            ...prev,
+                            images: prev.images.filter((_, i) => i !== index),
+                          }))
+                        }
+                        className="w-8 h-8"
+                      >
+                        <img
+                          src={assets.recycle_bin}
+                          alt="Remove"
+                          className="filter invert"
+                        />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {reviewData.images.length < 5 && (
+                <div className="relative w-32 h-32 md:w-40 md:h-40 lg:w-32 lg:h-32 border border-gray-300 bg-gray-100 flex items-center justify-center">
+                  <label className="flex items-center justify-center w-full h-full cursor-pointer">
+                    <span className="text-2xl text-gray-500">+</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) =>
+                        setReviewData((prev) => ({
+                          ...prev,
+                          images: [...prev.images, ...e.target.files],
+                        }))
+                      }
+                    />
+                  </label>
+                </div>
+              )}
+            </div>
+
+            {/* Review Textarea */}
             <textarea
-              className="w-full p-2 border rounded-md mb-4"
+              className="w-full p-3 border rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-blue-300"
               placeholder="Write your review"
               value={reviewData.review}
               onChange={(e) =>
@@ -486,31 +544,19 @@ const UserOrders = () => {
               }
             />
 
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) =>
-                setReviewData({
-                  ...reviewData,
-                  images: [...e.target.files],
-                })
-              }
-            />
-
+            {/* Buttons */}
             <div className="flex justify-end gap-4">
               <button
-                onClick={handleReviewSubmit}
-                className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition"
-              >
-                Submit Review
-              </button>
-
-              <button
                 onClick={() => setIsReviewModalVisible(false)}
-                className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-100 transition"
+                className="px-6 py-2 border rounded-md text-gray-700 hover:bg-gray-100 transition"
               >
                 Cancel
+              </button>
+              <button
+                onClick={handleReviewSubmit}
+                className="px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition"
+              >
+                Submit Review
               </button>
             </div>
           </div>

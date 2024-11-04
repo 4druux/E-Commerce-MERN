@@ -11,6 +11,7 @@ const CheckOut = () => {
   const [method, setMethod] = useState("cod");
   const { navigate } = useContext(ShopContext);
   const location = useLocation();
+  const [isLoading, setIsLoading] = useState(false); // State untuk loading
 
   const { selectedItems = [], delivery_fee = 0 } = location.state || {};
 
@@ -49,6 +50,8 @@ const CheckOut = () => {
       navigate("/login");
       return;
     }
+
+    setIsLoading(true); // Mulai loading
 
     const firstName = document.querySelector(
       'input[placeholder="First Name"]'
@@ -90,6 +93,7 @@ const CheckOut = () => {
         position: "top-right",
         className: "custom-toast",
       });
+      setIsLoading(false); // Hentikan loading jika error
       return;
     } else if (!emailRegex.test(email)) {
       toast.error("email is not valid ", {
@@ -151,6 +155,14 @@ const CheckOut = () => {
       },
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-black opacity-50  flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+        <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col sm:flex-row justify-between gap-4 pt-4 sm:pt-14 min-h-[80vh] border-t">

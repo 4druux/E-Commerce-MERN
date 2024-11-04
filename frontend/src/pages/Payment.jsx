@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Title from "../components/Title";
 import CartTotal from "../components/CartTotal";
 import { formatPrice } from "../utils/formatPrice";
 import axios from "axios";
 import { assets } from "../assets/assets";
+import SweetAlert from "../components/SweetAlert"; // Import SweetAlert untuk alert sukses
 import { FaUser, FaEnvelope, FaMapMarkerAlt, FaPhone } from "react-icons/fa";
 
 const Payment = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false); // State untuk loading
 
   const {
     firstName = "First Name",
@@ -26,14 +28,10 @@ const Payment = () => {
     delivery_fee = 0,
   } = location.state || {};
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
   const handlePayment = async () => {
     try {
+      setIsLoading(true); // Mulai loading
+
       const token = localStorage.getItem("authToken");
       const response = await axios.post(
         "https://ecommerce-backend-ebon-six.vercel.app/api/cart/checkout",
@@ -56,40 +54,52 @@ const Payment = () => {
       );
 
       if (response.status === 200) {
-        await axios.post(
-          "https://ecommerce-backend-ebon-six.vercel.app/api/cart/clear",
-          {},
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        // Hapus hanya item yang dicheckout dari cart
+        for (const item of selectedItems) {
+          await axios.post(
+            "https://ecommerce-backend-ebon-six.vercel.app/api/cart/remove",
+            {
+              productId: item._id, // Hapus item berdasarkan ID produk
+              size: item.size, // Hapus item berdasarkan ukuran (jika ada)
+            },
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+        }
 
-        setIsModalOpen(true);
+        setIsLoading(false); // Hentikan loading setelah selesai
+        // Gunakan SweetAlert dengan custom button untuk notifikasi sukses
+        await SweetAlert({
+          title: "Payment Successful!",
+          message: "Your payment has been processed successfully.",
+          icon: "success",
+        });
+
+        // Setelah SweetAlert ditutup, baru redirect ke halaman orders
+        navigate("/orders");
       } else {
         console.error("Payment failed with status:", response.status);
+        setIsLoading(false); // Hentikan loading jika gagal
       }
     } catch (error) {
       console.error("Payment processing failed:", error);
+      setIsLoading(false); // Hentikan loading jika terjadi error
     }
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    navigate("/orders");
   };
 
   useEffect(() => {
-    if (isModalOpen) {
-      document.body.classList.add("overflow-hidden");
-    } else {
-      document.body.classList.remove("overflow-hidden");
-    }
+    window.scrollTo(0, 0);
+  }, []);
 
-    // Cleanup on unmount
-    return () => {
-      document.body.classList.remove("overflow-hidden");
-    };
-  }, [isModalOpen]);
+  // Tampilkan indikator loading
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+        <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col sm:flex-row justify-between gap-4 pt-4 sm:pt-14 min-h-[80vh] border-t w-full px-0 sm:px-0">
@@ -236,50 +246,6 @@ const Payment = () => {
           </button>
         </div>
       </div>
-
-      {/* Payment Success Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
-          <div className="bg-white rounded-md overflow-hidden shadow-lg max-w-sm w-full">
-            <div className="p-6 text-center">
-              {/* Checkmark Animation */}
-              <div className="checkmark-container">
-                <svg
-                  className="checkmark"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 52 52"
-                >
-                  <circle
-                    className="checkmark-circle"
-                    cx="26"
-                    cy="26"
-                    r="25"
-                    fill="none"
-                  />
-                  <path
-                    className="checkmark-check"
-                    fill="none"
-                    d="M14.1 27.2l7.1 7.2 16.7-16.8"
-                  />
-                </svg>
-              </div>
-
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Payment Successful!
-              </h2>
-              <p className="text-gray-700">
-                Your payment has been processed successfully.
-              </p>
-              <button
-                onClick={closeModal}
-                className="mt-6 bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition duration-150"
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

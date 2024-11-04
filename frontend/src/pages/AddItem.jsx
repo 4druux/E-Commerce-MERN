@@ -182,14 +182,11 @@ const AddItem = () => {
         .map((image) => convertToBase64(image));
       const imageUrls = await Promise.all(imagePromises);
 
-      await axios.post(
-        "https://ecommerce-backend-ebon-six.vercel.app/api/products/add",
-        {
-          ...formData,
-          price: unformatPrice(formData.price), // Menghapus tanda titik sebelum menyimpan ke database
-          image: imageUrls,
-        }
-      );
+      await axios.post("https://ecommerce-backend-ebon-six.vercel.app/api/products/add", {
+        ...formData,
+        price: unformatPrice(formData.price), // Menghapus tanda titik sebelum menyimpan ke database
+        image: imageUrls,
+      });
 
       toast.success("Product added successfully!", {
         position: "top-right",
@@ -512,7 +509,7 @@ const AddItem = () => {
       </form>
       <ToastContainer />
       {isLoading && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black opacity-50   flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
           <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
         </div>
       )}

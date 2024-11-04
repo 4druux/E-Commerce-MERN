@@ -1,6 +1,7 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import SweetAlert from "../components/SweetAlert"; // Import SweetAlert dari komponen yang kamu buat
 import { ShopContext } from "../context/ShopContext";
 
 const UserLogin = () => {
@@ -9,18 +10,30 @@ const UserLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(""); // Untuk menampung pesan error
   const { loginUser } = useContext(ShopContext);
   const navigate = useNavigate();
 
+  const resetInputs = () => {
+    setUsername("");
+    setEmail("");
+    setPassword("");
+    setErrorMessage("");
+  };
+
   const onSubmitHandler = async (event) => {
     event.preventDefault();
+    setErrorMessage(""); // Reset pesan error sebelum proses baru
 
     if (currentState === "Login") {
       try {
-        const response = await axios.post("https://ecommerce-backend-ebon-six.vercel.app/api/user/login", {
-          email,
-          password,
-        });
+        const response = await axios.post(
+          "https://ecommerce-backend-ebon-six.vercel.app/api/user/login",
+          {
+            email,
+            password,
+          }
+        );
 
         if (response.data.token) {
           const expiresIn = response.data.expiresIn; // Ambil waktu kedaluwarsa dari respons
@@ -35,25 +48,45 @@ const UserLogin = () => {
         }
       } catch (error) {
         console.error("Login failed:", error);
-        alert("Login failed. Please try again.");
+        setErrorMessage("Invalid email or password."); // Set pesan error
       }
     } else {
       try {
-        const response = await axios.post("https://ecommerce-backend-ebon-six.vercel.app/api/user/register", {
-          username,
-          email,
-          password,
-        });
+        const response = await axios.post(
+          "https://ecommerce-backend-ebon-six.vercel.app/api/user/register",
+          {
+            username,
+            email,
+            password,
+          }
+        );
 
         if (response.data.token) {
-          alert(`User ${username} registered successfully!`);
+          // Gunakan SweetAlert setelah sukses registrasi
+          SweetAlert({
+            title: "Registration Successful!",
+            message: `User ${username} registered successfully`,
+            icon: "success",
+          });
+
           setCurrentState("Login"); // Alihkan ke halaman login setelah registrasi sukses
+          resetInputs(); // Reset input setelah berhasil registrasi
         }
       } catch (error) {
         console.error("Registration failed:", error);
-        alert("Registration failed. Please try again.");
+        // Cek apakah error disebabkan oleh email/username yang sudah digunakan
+        if (error.response && error.response.status === 400) {
+          setErrorMessage("Email or username is already."); // Set pesan error
+        } else {
+          setErrorMessage("Registration failed. Please try again.");
+        }
       }
     }
+  };
+
+  const toggleStateHandler = () => {
+    resetInputs(); // Reset input setiap kali mode berubah
+    setCurrentState(currentState === "Login" ? "Sign Up" : "Login");
   };
 
   return (
@@ -65,6 +98,12 @@ const UserLogin = () => {
         <p className="prata-regular text-3xl">{currentState}</p>
         <hr className="border-none h-[1.5px] w-8 bg-gray-800" />
       </div>
+
+      {errorMessage && (
+        <div className="w-full text-center text-red-700 bg-red-100 border border-red-300 px-4 py-2 rounded">
+          {errorMessage}
+        </div>
+      )}
 
       {currentState === "Sign Up" && (
         <input
@@ -103,17 +142,11 @@ const UserLogin = () => {
       <div className="w-full flex justify-between text-sm mt-[-8px]">
         <p className="cursor-pointer">Forgot your password?</p>
         {currentState === "Login" ? (
-          <p
-            onClick={() => setCurrentState("Sign Up")}
-            className="cursor-pointer"
-          >
+          <p onClick={toggleStateHandler} className="cursor-pointer">
             Create account
           </p>
         ) : (
-          <p
-            onClick={() => setCurrentState("Login")}
-            className="cursor-pointer"
-          >
+          <p onClick={toggleStateHandler} className="cursor-pointer">
             Login Here
           </p>
         )}
