@@ -69,7 +69,7 @@ const UserOrders = () => {
     return () => {
       document.body.classList.remove("overflow-hidden");
     };
-  }, [selectedOrder]);
+  }, [selectedOrder, isLoading]);
 
   const filteredOrders = orders.filter(
     (order) => order.status === filteredStatus

@@ -89,6 +89,19 @@ const Payment = () => {
   };
 
   useEffect(() => {
+    if (isLoading) {
+      document.body.style.overflow = "hidden"; 
+    } else {
+      document.body.style.overflow = "auto"; 
+    }
+  
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [isLoading]);
+  
+
+  useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
