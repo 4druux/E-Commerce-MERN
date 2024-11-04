@@ -58,7 +58,7 @@ const UserOrders = () => {
   }, [fetchOrders]);
 
   useEffect(() => {
-    if (selectedOrder) {
+    if (selectedOrder || isLoading) {
       document.body.classList.add("overflow-hidden");
       setIsModalVisible(true);
     } else {
@@ -568,7 +568,7 @@ const UserOrders = () => {
         </div>
       )}
       {isLoading && (
-      <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+        <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
           <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
         </div>
       )}
