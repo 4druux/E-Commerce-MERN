@@ -1,18 +1,19 @@
 import React, { useContext, useEffect, useState } from "react";
 import { ShopContext } from "../context/ShopContext";
-import axios from "axios";
-import { toast } from "react-toastify";
 import Title from "../components/Title";
 import { format } from "date-fns";
 import { assets } from "../assets/assets";
 import { formatPrice } from "../utils/formatPrice";
+import SkeletonUserOrders from "../components/SkeletonUserOrders";
+import SkeletonOrderFilters from "../components/SkeletonOrderFilters";
+import SweetAlert from "../components/SweetAlert";
 import {
   FaUser,
   FaEnvelope,
   FaMapMarkerAlt,
   FaPhone,
   FaTimes,
-} from "react-icons/fa"; // Icon untuk detail dan tombol close
+} from "react-icons/fa";
 
 const UserOrders = () => {
   const {
@@ -22,16 +23,26 @@ const UserOrders = () => {
     fetchOrders,
     cancelOrder,
     updateOrderStatus,
+    submitReview,
   } = useContext(ShopContext);
+
+  const [isFetchingOrders, setIsFetchingOrders] = useState(true);
   const [filteredStatus, setFilteredStatus] = useState("Pending");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
-  const [orderToCancel, setOrderToCancel] = useState(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isReviewModalVisible, setIsReviewModalVisible] = useState(false);
-  const [currentOrderForReview, setCurrentOrderForReview] = useState(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  const [returnReason, setReturnReason] = useState("");
+  const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
+  const [isReturnModalVisible, setIsReturnModalVisible] = useState(false);
+  const [currentOrderForReturn, setCurrentOrderForReturn] = useState(null);
+
+  const [isAlertActive, setIsAlertActive] = useState(false);
+
+  const [currentOrderForReview, setCurrentOrderForReview] = useState(null);
   const [reviewData, setReviewData] = useState({
     rating: 0,
     review: "",
@@ -42,95 +53,193 @@ const UserOrders = () => {
     const token = localStorage.getItem("authToken");
 
     if (token) {
-      fetchOrders(token); // Fetch orders on initial render
+      setIsFetchingOrders(true);
+      fetchOrders(token).finally(() => setIsFetchingOrders(false));
     }
+
+    // setTimeout(() => {
+    //   fetchOrders(token).finally(() => setIsFetchingOrders(false));
+    // }, 60000);
 
     // Set up polling to fetch orders every 10 seconds
     const intervalId = setInterval(() => {
       if (token) {
-        fetchOrders(token); // Fetch orders periodically
+        fetchOrders(token);
       }
-    }, 10000); // Polling interval set to 10 seconds (adjust as needed)
+    }, 10000);
 
     return () => {
-      clearInterval(intervalId); // Clear the interval when the component unmounts
+      clearInterval(intervalId);
     };
   }, [fetchOrders]);
 
   useEffect(() => {
-    if (selectedOrder || isLoading) {
-      document.body.classList.add("overflow-hidden");
-      setIsModalVisible(true);
+    const isModalActive =
+      isViewModalOpen ||
+      isReviewModalOpen ||
+      isReturnModalOpen ||
+      isAlertActive ||
+      selectedOrder ||
+      isLoading;
+
+    if (isModalActive) {
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.classList.remove("overflow-hidden");
-      setIsModalVisible(false);
+      document.body.style.overflow = "auto";
     }
 
     return () => {
-      document.body.classList.remove("overflow-hidden");
+      document.body.style.overflow = "auto";
     };
-  }, [selectedOrder, isLoading]);
+  }, [
+    isViewModalOpen,
+    isReviewModalOpen,
+    isReturnModalOpen,
+    isAlertActive,
+    selectedOrder,
+    isLoading,
+  ]);
 
-  const filteredOrders = orders.filter(
-    (order) => order.status === filteredStatus
-  );
+  const handleClickOutside = (e) => {
+    if (e.target.id === "modal-overlay" && !isLoading) {
+      closeDetailsWithAnimation();
+      closeReviewModalWithAnimation();
+      closeReturnModalWithAnimation();
+    }
+  };
 
   const handleViewDetails = (order) => {
     setSelectedOrder(order);
-  };
-
-  const closeDetails = () => {
-    setSelectedOrder(null);
-  };
-
-  const handleClickOutside = (e) => {
-    if (e.target.id === "modal-overlay") {
-      closeDetails();
-    }
+    setIsViewModalOpen(true);
+    setTimeout(() => setIsModalVisible(true), 50);
   };
 
   const closeDetailsWithAnimation = () => {
     setIsModalVisible(false);
     setTimeout(() => {
+      setIsViewModalOpen(false);
       setSelectedOrder(null);
     }, 700);
   };
 
-  const confirmCancelOrder = (order) => {
-    setOrderToCancel(order);
-    setIsCancelModalVisible(true);
-  };
-
-  const handleCancelOrder = () => {
-    if (orderToCancel) {
-      cancelOrder(orderToCancel._id);
-      setIsCancelModalVisible(false);
-      setFilteredStatus("Canceled");
-    }
-  };
-
   const handleMarkAsCompleted = (order) => {
     setCurrentOrderForReview(order);
-    setIsReviewModalVisible(true);
+    setIsReviewModalOpen(true);
+    setTimeout(() => setIsReviewModalVisible(true), 50);
   };
 
-  const handleMarkAsReturned = async (order) => {
-    await updateOrderStatus(order._id, "Returned");
+  const closeReviewModalWithAnimation = () => {
+    setIsReviewModalVisible(false);
+    setTimeout(() => {
+      setIsReviewModalOpen(false);
+      setCurrentOrderForReview(null);
+    }, 700);
   };
 
-  const convertToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
+  const handleCancelOrder = (order) => {
+    setIsAlertActive(true);
+
+    document.body.style.overflow = "hidden";
+
+    SweetAlert({
+      title: "Order Cancellation Confirmation",
+      message: "Are you sure you want to cancel this order? ",
+      icon: "warning",
+      buttons: true,
+      dangerMode: true,
+      closeOnClickOutside: false,
+    }).then(async (willCancel) => {
+      if (willCancel) {
+        setIsLoading(true);
+        await cancelOrder(order._id);
+        setIsLoading(false);
+        setFilteredStatus("Canceled");
+
+        // Modal sukses setelah pembatalan
+        SweetAlert({
+          title: "Order Canceled",
+          message: "Your order has been successfully canceled.",
+          icon: "success",
+          buttons: true,
+          closeOnClickOutside: false,
+        }).then(() => {
+          setIsAlertActive(false);
+          document.body.style.overflow = "auto";
+        });
+      } else {
+        setIsAlertActive(false);
+        document.body.style.overflow = "auto";
+      }
     });
+  };
+
+  const closeReturnModalWithAnimation = () => {
+    setIsReturnModalVisible(false);
+    setTimeout(() => {
+      setIsReturnModalOpen(false);
+      setCurrentOrderForReturn(null);
+    }, 700);
+  };
+
+  const handleReturnOrder = (order) => {
+    setCurrentOrderForReturn(order);
+    setIsReturnModalOpen(true);
+    setTimeout(() => setIsReturnModalVisible(true), 50);
+  };
+
+  const confirmReturnOrder = async () => {
+    if (returnReason && currentOrderForReturn) {
+      setIsLoading(true);
+      try {
+        await updateOrderStatus(currentOrderForReturn._id, "Returned");
+
+        setIsLoading(false);
+        closeReturnModalWithAnimation();
+        setIsAlertActive(true);
+
+        await SweetAlert({
+          title: "Order Successfully Returned",
+          message: "Your order has been successfully returned.",
+          icon: "success",
+        });
+        setIsAlertActive(false);
+      } catch (error) {
+        console.error("Failed to return order:", error.response?.data || error);
+        setIsAlertActive(true);
+        await SweetAlert({
+          title: "Warning",
+          message: "Failed to return the order.",
+          icon: "error",
+        });
+
+        setIsAlertActive(false);
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      await SweetAlert({
+        title: "Warning",
+        message: "Please select a reason for returning this item.",
+        icon: "error",
+      });
+    }
   };
 
   const handleReviewSubmit = async (event) => {
     event.preventDefault();
-    setIsLoading(true); // Mulai loading
-    const token = localStorage.getItem("authToken");
+
+    if (!reviewData.rating || reviewData.rating === 0) {
+      setIsAlertActive(true);
+      await SweetAlert({
+        title: "Warning",
+        message: "Please rate this product by selecting a star.",
+        icon: "warning",
+      });
+      setIsAlertActive(false);
+      return;
+    }
+
+    setIsLoading(true);
 
     const formData = {
       rating: reviewData.rating,
@@ -149,23 +258,108 @@ const UserOrders = () => {
     }
 
     try {
-      await axios.post(
-        `https://ecommerce-backend-ebon-six.vercel.app/api/products/${currentOrderForReview.items[0].productId}/review`,
-        formData,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await submitReview(formData, currentOrderForReview);
 
-      await updateOrderStatus(currentOrderForReview._id, "Completed");
-
+      closeReviewModalWithAnimation();
       setIsReviewModalVisible(false);
+      setIsLoading(false);
+
+      setIsAlertActive(true);
+      await SweetAlert({
+        title: "Review Submitted Successfully",
+        message: "Thank you for submitting a review for your order.",
+        icon: "success",
+      });
+
+      setIsAlertActive(false);
       fetchOrders();
     } catch (error) {
-      console.error("Failed to submit review:", error.response?.data || error);
-      toast.error("Failed to submit review.");
-    } finally {
-      setIsLoading(false); // Hentikan loading
+      console.error("Review submission failed:", error);
+      setIsLoading(false);
+      setIsAlertActive(true);
+
+      await SweetAlert({
+        title: "Warning",
+        message: "Failed to submit the review. Please try again.",
+        icon: "error",
+      });
+
+      setIsAlertActive(false);
     }
   };
+
+  const convertToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  // const handleReviewSubmit = async (event) => {
+  //   event.preventDefault();
+  //   setIsLoading(true);
+  //   const token = localStorage.getItem("authToken");
+
+  //   const formData = {
+  //     rating: reviewData.rating,
+  //     reviewText: reviewData.review,
+  //     size: currentOrderForReview.items[0].size,
+  //   };
+
+  //   if (reviewData.images && reviewData.images.length > 0) {
+  //     const imagePromises = reviewData.images.map((image) =>
+  //       convertToBase64(image)
+  //     );
+  //     const base64Images = await Promise.all(imagePromises);
+  //     formData.reviewImages = base64Images;
+  //   } else {
+  //     formData.reviewImages = [];
+  //   }
+
+  //   try {
+  //     await axios.post(
+  //       `http://localhost:5173/api/products/${currentOrderForReview.items[0].productId}/review`,
+  //       formData,
+  //       { headers: { Authorization: `Bearer ${token}` } }
+  //     );
+
+  //     await updateOrderStatus(currentOrderForReview._id, "Completed");
+  //     closeReviewModalWithAnimation();
+  //     setIsReviewModalVisible(false);
+  //     fetchOrders();
+  //   } catch (error) {
+  //     console.error("Failed to submit review:", error.response?.data || error);
+  //     toast.error("Failed to submit review.");
+  //   } finally {
+  //     setIsLoading(false); // Hentikan loading
+  //   }
+  // };
+
+  const filteredOrders = orders
+    .filter((order) => order.status === filteredStatus)
+    .sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+
+  if (isFetchingOrders) {
+    return (
+      <div className="border-t pt-16">
+        <div className="text-2xl mb-3">
+          <Title text1={"MY"} text2={"ORDERS"} />
+        </div>
+
+        {/* Skeleton for Order Filters */}
+        <SkeletonOrderFilters />
+
+        {/* Skeleton for Order Items */}
+        <div>
+          {Array.from({ length: 3 }).map((_, index) => (
+            <SkeletonUserOrders key={index} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="border-t pt-16">
@@ -283,7 +477,7 @@ const UserOrders = () => {
 
                 {order.status === "Paid" && (
                   <button
-                    onClick={() => confirmCancelOrder(order)}
+                    onClick={() => handleCancelOrder(order)}
                     className="bg-red-500 text-white px-3 py-2 rounded-sm hover:bg-red-600 transition text-xs"
                   >
                     Cancel Order
@@ -293,7 +487,7 @@ const UserOrders = () => {
                 {order.status === "Shipped" && (
                   <div className="flex gap-2">
                     <button
-                      onClick={() => handleMarkAsReturned(order)}
+                      onClick={() => handleReturnOrder(order)}
                       className="bg-yellow-500 text-white px-3 py-2 rounded-sm hover:bg-yellow-600 transition text-xs"
                     >
                       Returned
@@ -319,7 +513,7 @@ const UserOrders = () => {
         </div>
       )}
 
-      {selectedOrder && (
+      {isViewModalOpen && (
         <div
           id="modal-overlay"
           className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out"
@@ -327,8 +521,10 @@ const UserOrders = () => {
         >
           <div
             className={`bg-white ${
-              isModalVisible ? "translate-y-0" : "translate-y-full"
-            } md:rounded-md overflow-auto shadow-lg w-full max-w-screen-md h-full md:h-auto p-6 relative transform transition-transform duration-700 ease-in-out`}
+              isModalVisible
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-full"
+            } md:rounded-md overflow-auto shadow-lg w-full max-w-screen-md h-full md:h-auto p-6 relative transform transition-all duration-700 ease-in-out`}
           >
             <button
               onClick={closeDetailsWithAnimation}
@@ -364,6 +560,50 @@ const UserOrders = () => {
               <div className="flex items-center">
                 <FaPhone className="text-gray-700 mr-3" />
                 <p className="text-sm text-gray-500">{selectedOrder.phone}</p>
+              </div>
+
+              <div className="mt-6 bg-gray-50 p-3 rounded-md border border-gray-200 flex justify-between items-center">
+                <h3 className="text-lg font-medium">Payment Method</h3>
+                <div className="flex items-center">
+                  {selectedOrder.paymentMethod.toLowerCase() === "qris" ? (
+                    <img
+                      className="h-6 mx-2"
+                      src={assets.qris_icon}
+                      alt="QRIS"
+                    />
+                  ) : selectedOrder.paymentMethod.toLowerCase() === "bca" ? (
+                    <img className="h-6 mx-2" src={assets.bca_icon} alt="BCA" />
+                  ) : selectedOrder.paymentMethod.toLowerCase() === "bni" ? (
+                    <img className="h-6 mx-2" src={assets.bni_icon} alt="BNI" />
+                  ) : selectedOrder.paymentMethod.toLowerCase() === "bri" ? (
+                    <img className="h-6 mx-2" src={assets.bri_icon} alt="BRI" />
+                  ) : selectedOrder.paymentMethod.toLowerCase() ===
+                    "mandiri" ? (
+                    <img
+                      className="h-6 mx-2"
+                      src={assets.mandiri_icon}
+                      alt="Mandiri"
+                    />
+                  ) : selectedOrder.paymentMethod.toLowerCase() ===
+                    "indomart" ? (
+                    <img
+                      className="h-6 mx-2"
+                      src={assets.indomart_icon}
+                      alt="Indomart"
+                    />
+                  ) : selectedOrder.paymentMethod.toLowerCase() ===
+                    "alfamart" ? (
+                    <img
+                      className="h-6 mx-2"
+                      src={assets.alfamart_icon}
+                      alt="Alfamart"
+                    />
+                  ) : (
+                    <p className="text-sm font-semibold text-gray-800">
+                      {selectedOrder.paymentMethod.toUpperCase()}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -436,33 +676,23 @@ const UserOrders = () => {
         </div>
       )}
 
-      {isCancelModalVisible && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-md shadow-lg max-w-sm w-full">
-            <h3 className="text-lg font-medium mb-4 text-gray-800">
-              Are you sure you want to cancel this order?
-            </h3>
-            <div className="flex justify-end gap-4">
-              <button
-                onClick={handleCancelOrder}
-                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
-              >
-                Yes, Cancel
-              </button>
-              <button
-                onClick={() => setIsCancelModalVisible(false)}
-                className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-100 transition"
-              >
-                No
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isReviewModalVisible && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
-          <div className="bg-white p-8 rounded-lg shadow-xl max-w-lg w-full relative">
+      {isReviewModalOpen && (
+        <div
+          id="modal-overlay"
+          className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out"
+          onClick={(e) => {
+            if (e.target.id === "modal-overlay") {
+              closeReviewModalWithAnimation();
+            }
+          }}
+        >
+          <div
+            className={`bg-white ${
+              isReviewModalVisible
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-full"
+            } p-8 rounded-lg shadow-xl max-w-lg w-full relative transform transition-all duration-700 ease-in-out`}
+          >
             <h3 className="text-xl font-semibold mb-4 text-gray-800">
               Leave a Review
             </h3>
@@ -552,7 +782,7 @@ const UserOrders = () => {
             {/* Buttons */}
             <div className="flex justify-end gap-4">
               <button
-                onClick={() => setIsReviewModalVisible(false)}
+                onClick={closeReviewModalWithAnimation}
                 className="px-6 py-2 border rounded-md text-gray-700 hover:bg-gray-100 transition"
               >
                 Cancel
@@ -567,6 +797,64 @@ const UserOrders = () => {
           </div>
         </div>
       )}
+
+      {isReturnModalOpen && (
+        <div
+          id="modal-overlay"
+          className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out"
+          onClick={(e) => {
+            if (e.target.id === "modal-overlay") {
+              closeReturnModalWithAnimation();
+            }
+          }}
+        >
+          <div
+            className={`bg-white ${
+              isReturnModalVisible
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-full"
+            } p-8 rounded-lg shadow-xl max-w-lg w-full relative transform transition-all duration-700 ease-in-out`}
+          >
+            <h3 className="text-xl font-semibold mb-4 text-gray-800">
+              Konfirmasi Pengembalian
+            </h3>
+
+            {/* Pilihan Alasan Pengembalian */}
+            <select
+              value={returnReason}
+              onChange={(e) => setReturnReason(e.target.value)}
+              className="w-full p-2 mt-2 border rounded"
+            >
+              <option value="">Pilih Alasan Pengembalian</option>
+              <option value="Produk rusak">Produk rusak</option>
+              <option value="Produk tidak sesuai deskripsi">
+                Produk tidak sesuai deskripsi
+              </option>
+              <option value="Tidak puas dengan produk">
+                Tidak puas dengan produk
+              </option>
+              <option value="Salah pesan">Salah pesan</option>
+            </select>
+
+            {/* Tombol Konfirmasi */}
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={closeReturnModalWithAnimation}
+                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+              >
+                Batal
+              </button>
+              <button
+                onClick={confirmReturnOrder}
+                className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
+              >
+                Konfirmasi Pengembalian
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {isLoading && (
         <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
           <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>

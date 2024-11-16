@@ -4,14 +4,15 @@ import { ShopContext } from "../context/ShopContext";
 import { assets } from "../assets/assets";
 import RelatedProducts from "../components/RelatedProducts";
 import { toast } from "react-toastify";
-import axios from "axios";
 import "react-toastify/dist/ReactToastify.css";
 import { formatPrice } from "../utils/formatPrice";
+import SkeletonProduct from "../components/SkeletonProduct"; 
 
 const Product = () => {
   // Fetch Data Product
   const { productId } = useParams();
-  const { currency, addToCart, isLoggedIn } = useContext(ShopContext);
+  const { currency, addToCart, isLoggedIn, fetchProductsById } =
+    useContext(ShopContext);
   const [productData, setProductData] = useState(null);
   const [size, setSize] = useState("");
 
@@ -39,11 +40,12 @@ const Product = () => {
   const ratingDropdownRef = useRef(null);
   const sizeDropdownRef = useRef(null);
   const dateDropdownRef = useRef(null);
-
-  const [isLoading, setIsLoading] = useState(true); // Loading dimulai dengan true
-
   const navigate = useNavigate();
   const allSizes = ["S", "M", "L", "XL", "XXL"];
+
+  const [loadingProduct, setLoadingProduct] = useState(true);
+  const [loadingCart, setLoadingCart] = useState(false);
+  const cachedProductRef = useRef({});
 
   // Fungsi Rata-Rata Rating
   const calculateAverageRating = (reviews) => {
@@ -52,36 +54,44 @@ const Product = () => {
     return totalRating / reviews.length;
   };
 
-  // Fetch Data Product
   useEffect(() => {
-    const fetchProductData = async () => {
-      try {
-        setIsLoading(true); // Mulai loading sebelum request
-        const response = await axios.get(
-          `https://ecommerce-backend-ebon-six.vercel.app/api/products/${productId}`
+    const getProductData = async () => {
+      if (cachedProductRef.current[productId]) {
+        setProductData(cachedProductRef.current[productId]);
+        setImage(cachedProductRef.current[productId].image[0]);
+        setAverageRating(
+          calculateAverageRating(
+            cachedProductRef.current[productId].reviews || []
+          )
         );
-        const product = response.data;
+        setLoadingProduct(false);
+        return;
+      }
+
+      setLoadingProduct(true);
+
+      const product = await fetchProductsById(productId);
+      if (product) {
         setProductData(product);
         setImage(product.image[0]);
         setReviews(product.reviews || []);
-
-        const avgRating = calculateAverageRating(product.reviews || []);
-        setAverageRating(avgRating);
-        setIsLoading(false); // Stop loading setelah data berhasil diambil
-      } catch (error) {
-        console.error("Failed to fetch product data", error);
-        toast.error("Failed to load product.", { autoClose: 2000 });
-        setIsLoading(false); // Stop loading jika terjadi error
+        setAverageRating(calculateAverageRating(product.reviews || []));
+        cachedProductRef.current[productId] = product;
       }
+      setLoadingProduct(false);
+      window.scrollTo(0, 0);
     };
 
-    fetchProductData();
-  }, [productId]);
+    getProductData();
+  }, [productId, fetchProductsById]);
 
-  // Tab Top 0
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [productId]);
+  // Handle Relate Products
+  const handleRelatedProductClick = (newProductId) => {
+    if (newProductId !== productId) {
+      setLoadingProduct(true);
+      navigate(`/product/${newProductId}`);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -112,12 +122,11 @@ const Product = () => {
 
   useEffect(() => {
     if (isModalOpen || isReviewModalOpen) {
-      document.body.style.overflow = "hidden"; // Disable scrolling
+      document.body.style.overflow = "hidden"; 
     } else {
-      document.body.style.overflow = "unset"; // Enable scrolling
+      document.body.style.overflow = "unset"; 
     }
 
-    // Cleanup function to reset the overflow when component unmounts
     return () => {
       document.body.style.overflow = "unset";
     };
@@ -149,8 +158,31 @@ const Product = () => {
     }
   };
 
-  // Fungsi handle Checkout
-  const handleCheckout = () => {
+  const handleAddToCart = async () => {
+    if (!isLoggedIn) {
+      navigate("/login");
+      return;
+    }
+    if (!size) {
+      toast.error("Please select a size", {
+        autoClose: 2000,
+        position: "top-right",
+        className: "custom-toast",
+      });
+      return;
+    }
+    setLoadingCart(true);
+    await addToCart(productData._id, size, productData.price, productData.name);
+    setLoadingCart(false);
+    setSize("");
+    toast.success("Product added to cart", {
+      autoClose: 2000,
+      position: "top-right",
+      className: "custom-toast",
+    });
+  };
+
+  const handleCheckout = async () => {
     if (!isLoggedIn) {
       navigate("/login");
       return;
@@ -171,40 +203,10 @@ const Product = () => {
       quantity: 1,
       price: productData.price,
     };
-
-    addToCart(productData._id, size, productData.price, productData.name);
-
-    setTimeout(() => {
-      navigate("/cart", { state: { selectedItems: [selectedItem] } });
-    }, 100);
+    await addToCart(productData._id, size, productData.price, productData.name);
+    navigate("/cart", { state: { selectedItems: [selectedItem] } });
   };
 
-  // Fungsi handle Cart
-  const handleAddToCart = () => {
-    if (!isLoggedIn) {
-      navigate("/login");
-      return;
-    }
-
-    if (!size) {
-      toast.error("Please select a size", {
-        autoClose: 2000,
-        position: "top-right",
-        className: "custom-toast",
-      });
-      return;
-    }
-
-    addToCart(productData._id, size, productData.price, productData.name);
-
-    toast.success("Product added to cart", {
-      autoClose: 2000,
-      position: "top-right",
-      className: "custom-toast",
-    });
-  };
-
-  // Fungsi Tab aktif Descripton dan Review
   const handleTabClick = (tab) => {
     setActiveTab(tab);
   };
@@ -227,14 +229,13 @@ const Product = () => {
         <span>Filter by Rating</span>
         {rating > 0 && (
           <span className="ml-2 flex items-center">
-            <span className="mr-1">(</span> {/* Tambahkan margin ke kanan */}
+            <span className="mr-1">(</span> 
             <img
               src={assets.star_icon}
               alt="Star"
               className="w-4 h-4 text-yellow-500"
             />
             <span className="ml-1">{rating})</span>{" "}
-            {/* Tambahkan rating dan tutup kurung */}
           </span>
         )}
       </div>
@@ -248,9 +249,9 @@ const Product = () => {
         <span>Filter by Size</span>
         {selectedSize && (
           <span className="ml-2 flex items-center">
-            <span className="mr-1">(</span> {/* Tambahkan margin ke kanan */}
+            <span className="mr-1">(</span>
             <span>{selectedSize}</span>
-            <span className="ml-1">)</span> {/* Tambahkan tanda tutup kurung */}
+            <span className="ml-1">)</span> 
           </span>
         )}
       </div>
@@ -262,13 +263,13 @@ const Product = () => {
     return (
       <div className="flex flex-col gap-2">
         {[...Array(5)].map((_, rowIndex) => {
-          const starCount = 5 - rowIndex; // Menentukan jumlah bintang per baris
-          const reviewCount = countReviewsByRating(starCount); // Hitung jumlah ulasan per rating
+          const starCount = 5 - rowIndex; 
+          const reviewCount = countReviewsByRating(starCount); 
 
           return (
             <button
               key={rowIndex}
-              onClick={() => handleRatingFilterChange(starCount)} // Klik seluruh baris untuk filter
+              onClick={() => handleRatingFilterChange(starCount)} 
               className="border border-gray-300 p-2 rounded-md hover:bg-gray-100 transition focus:outline-none w-full flex items-center justify-between"
             >
               {/* Render bintang */}
@@ -278,11 +279,11 @@ const Product = () => {
                     key={starIndex}
                     src={
                       starCount === rating
-                        ? assets.star_icon // Filled star
-                        : assets.star_dull_icon // Unfilled star
+                        ? assets.star_icon 
+                        : assets.star_dull_icon 
                     }
                     alt={`${starCount} Star`}
-                    className="w-5 h-5 mx-1" // Ukuran bintang dan spasi antar bintang
+                    className="w-5 h-5 mx-1" 
                   />
                 ))}
               </div>
@@ -411,6 +412,8 @@ const Product = () => {
   const countReviewsByRating = (rating) =>
     reviews.filter((review) => review.rating === rating).length;
 
+  if (loadingProduct) return <SkeletonProduct />;
+
   return productData ? (
     <div className="border-t-2 pt-10 transition-opacity ease-in duration-500 opacity-100">
       <div className="flex flex-col lg:flex-row md:flex-row gap-12">
@@ -501,8 +504,9 @@ const Product = () => {
             <button
               className="flex-1 border border-black px-4 py-3 text-sm active:bg-gray-700 hover:bg-black hover:text-white transition-all duration-500"
               onClick={handleAddToCart}
+              disabled={loadingCart} 
             >
-              ADD TO CART
+              {loadingCart ? "ADDING TO CART..." : "ADD TO CART"}
             </button>
             <button
               className="flex-1 bg-black text-white px-4 py-3 text-sm active:bg-gray-700"
@@ -607,7 +611,7 @@ const Product = () => {
                 {isRatingDropdownOpen && (
                   <div
                     className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-10 p-2"
-                    style={{ minWidth: "200px" }} // Menjaga ukuran konsisten
+                    style={{ minWidth: "200px" }} 
                   >
                     <div className="flex flex-col items-start gap-2">
                       {renderModernStars(
@@ -788,15 +792,10 @@ const Product = () => {
       <RelatedProducts
         category={productData.category}
         subCategory={productData.subCategory}
+        onProductClick={handleRelatedProductClick}
       />
     </div>
-  ) : (
-    isLoading && (
-      <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
-        <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
-      </div>
-    )
-  );
+  ) : null;
 };
 
 export default Product;

@@ -1,17 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { ShopContext } from "../context/ShopContext";
 import Title from "../components/Title";
 import CartTotal from "../components/CartTotal";
 import { formatPrice } from "../utils/formatPrice";
-import axios from "axios";
 import { assets } from "../assets/assets";
-import SweetAlert from "../components/SweetAlert"; // Import SweetAlert untuk alert sukses
+import SweetAlert from "../components/SweetAlert";
 import { FaUser, FaEnvelope, FaMapMarkerAlt, FaPhone } from "react-icons/fa";
 
 const Payment = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false); // State untuk loading
+  const { handlePayment } = useContext(ShopContext);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAlertActive, setIsAlertActive] = useState(false);
 
   const {
     firstName = "First Name",
@@ -28,78 +30,62 @@ const Payment = () => {
     delivery_fee = 0,
   } = location.state || {};
 
-  const handlePayment = async () => {
-    try {
-      setIsLoading(true); // Mulai loading
+  const paymentData = {
+    firstName,
+    lastName,
+    email,
+    street,
+    city,
+    state: addressState,
+    zipCode,
+    country,
+    phone,
+    paymentMethod,
+    selectedItems,
+  };
 
-      const token = localStorage.getItem("authToken");
-      const response = await axios.post(
-        "https://ecommerce-backend-ebon-six.vercel.app/api/cart/checkout",
-        {
-          firstName,
-          lastName,
-          email,
-          street,
-          city,
-          state: addressState,
-          zipCode,
-          country,
-          phone,
-          paymentMethod,
-          selectedItems,
+  const onConfirmPayment = async () => {
+    setIsLoading(true);
+
+    try {
+      await handlePayment(
+        paymentData,
+        async () => {
+          setIsLoading(false);
+          setIsAlertActive(true);
+
+          const result = await SweetAlert({
+            title: "Payment Successful!",
+            message: "Your payment has been processed successfully.",
+            icon: "success",
+          });
+
+          if (result) {
+            setIsAlertActive(false);
+            navigate("/orders", { replace: true });
+          }
         },
-        {
-          headers: { Authorization: `Bearer ${token}` },
+        () => {
+          setIsLoading(false);
         }
       );
-
-      if (response.status === 200) {
-        // Hapus hanya item yang dicheckout dari cart
-        for (const item of selectedItems) {
-          await axios.post(
-            "https://ecommerce-backend-ebon-six.vercel.app/api/cart/remove",
-            {
-              productId: item._id, // Hapus item berdasarkan ID produk
-              size: item.size, // Hapus item berdasarkan ukuran (jika ada)
-            },
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-        }
-
-        setIsLoading(false); // Hentikan loading setelah selesai
-        // Gunakan SweetAlert dengan custom button untuk notifikasi sukses
-        await SweetAlert({
-          title: "Payment Successful!",
-          message: "Your payment has been processed successfully.",
-          icon: "success",
-        });
-
-        // Setelah SweetAlert ditutup, baru redirect ke halaman orders
-        navigate("/orders");
-      } else {
-        console.error("Payment failed with status:", response.status);
-        setIsLoading(false); // Hentikan loading jika gagal
-      }
     } catch (error) {
-      console.error("Payment processing failed:", error);
-      setIsLoading(false); // Hentikan loading jika terjadi error
+      setIsLoading(false);
+      console.error("Payment failed:", error);
     }
   };
 
   useEffect(() => {
-    if (isLoading) {
-      document.body.style.overflow = "hidden"; 
+    if (isLoading || isAlertActive) {
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = "auto"; 
+      document.body.style.overflow = "auto";
     }
-  
+
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [isLoading]);
-  
+  }, [isLoading, isAlertActive]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -227,7 +213,7 @@ const Payment = () => {
                 ) : (
                   <p className="text-sm font-semibold text-gray-800">
                     {paymentMethod.toUpperCase()}
-                  </p> // If no image, just display the text
+                  </p>
                 )}
               </div>
             </div>
@@ -243,7 +229,7 @@ const Payment = () => {
         {/* Confirm Payment Button */}
         <div className="w-full text-center mt-10">
           <button
-            onClick={handlePayment}
+            onClick={onConfirmPayment}
             className="bg-black text-white px-16 py-3 text-sm hover:bg-gray-800 transition duration-150"
           >
             CONFIRM PAYMENT
@@ -252,7 +238,7 @@ const Payment = () => {
       </div>
       {/* Overlay Loading */}
       {isLoading && (
-      <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+        <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
           <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
         </div>
       )}

@@ -3,9 +3,9 @@ import { ShopContext } from "../context/ShopContext";
 import Title from "../components/Title";
 import CartTotal from "../components/CartTotal";
 import { formatPrice } from "../utils/formatPrice";
-import axios from "axios";
 import { useLocation } from "react-router-dom";
 import CartItem from "../components/CartItem";
+import SkeletonCart from "../components/SkeletonCart";
 
 const Cart = () => {
   const location = useLocation();
@@ -15,36 +15,26 @@ const Cart = () => {
     delivery_fee,
     updateQuantity,
     removeFromCart,
+    setCartItems,
+    cartItems,
+    fetchCartData,
     navigate,
   } = useContext(ShopContext);
 
-  const [cartData, setCartData] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [showDelete, setShowDelete] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const [isLoading, setIsLoading] = useState(true); // State untuk loading
+  const [isLoading, setIsLoading] = useState(true); 
 
   useEffect(() => {
-    const fetchCartData = async () => {
-      try {
-        const token = localStorage.getItem("authToken");
-        const response = await axios.get("https://ecommerce-backend-ebon-six.vercel.app/api/cart", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+    const token = localStorage.getItem("authToken");
+    fetchCartData(token).then(() => setIsLoading(false)); 
+  }, [fetchCartData]);
 
-        setCartData(response.data.items);
-
-        if (location.state?.selectedItems) {
-          setSelectedItems(location.state.selectedItems);
-        }
-        setIsLoading(false); // Hentikan loading setelah data berhasil diterima
-      } catch (error) {
-        console.error("Failed to fetch cart data", error);
-        setIsLoading(false); // Hentikan loading jika terjadi error
-      }
-    };
-
-    fetchCartData();
+  useEffect(() => {
+    if (location.state?.selectedItems) {
+      setSelectedItems(location.state.selectedItems);
+    }
   }, [location.state]);
 
   useEffect(() => {
@@ -63,7 +53,7 @@ const Cart = () => {
   const handleQuantityChange = async (itemId, size, newQuantity) => {
     if (newQuantity >= 1) {
       await updateQuantity(itemId, size, newQuantity);
-      setCartData((prevData) =>
+      setCartItems((prevData) =>
         prevData.map((item) =>
           item.productId === itemId && item.size === size
             ? { ...item, quantity: newQuantity }
@@ -71,7 +61,6 @@ const Cart = () => {
         )
       );
 
-      // Perbarui selectedItems jika item yang berubah sudah dipilih
       setSelectedItems((prevItems) =>
         prevItems.map((selectedItem) =>
           selectedItem._id === itemId && selectedItem.size === size
@@ -116,7 +105,7 @@ const Cart = () => {
 
   const handleRemoveItem = async (itemId, size) => {
     await removeFromCart(itemId, size);
-    setCartData((prevData) =>
+    setCartItems((prevData) =>
       prevData.filter((item) => item.productId !== itemId || item.size !== size)
     );
 
@@ -140,8 +129,15 @@ const Cart = () => {
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50">
-        <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
+      <div className="border-t pt-14">
+        <div className="text-2xl mb-3">
+          <Title text1={"YOUR"} text2={"CART"} />
+        </div>
+        <div>
+          {Array.from({ length: 3 }).map((_, index) => (
+            <SkeletonCart key={index} />
+          ))}
+        </div>
       </div>
     );
   }
@@ -152,58 +148,64 @@ const Cart = () => {
         <Title text1={"YOUR"} text2={"CART"} />
       </div>
 
-      <div>
-        {cartData.map((item, index) => {
-          const productData = products.find(
-            (product) => product._id === item.productId
-          );
+      {cartItems.length === 0 ? (
+        <p className="text-center text-gray-500 my-10">No items available</p>
+      ) : (
+        <div>
+          {cartItems.map((item, index) => {
+            const productData = products.find(
+              (product) => product._id === item.productId
+            );
 
-          if (!productData) {
-            return null;
-          }
+            if (!productData) {
+              return null;
+            }
 
-          return (
-            <CartItem
-              key={index}
-              item={item}
-              productData={productData}
+            return (
+              <CartItem
+                key={index}
+                item={item}
+                productData={productData}
+                selectedItems={selectedItems}
+                handleCheckboxChange={handleCheckboxChange}
+                handleDecrement={handleDecrement}
+                handleQuantityChange={handleQuantityChange}
+                handleIncrement={handleIncrement}
+                handleRemoveItem={handleRemoveItem}
+                currency={currency}
+                formatPrice={formatPrice}
+                showDelete={showDelete}
+                setShowDelete={setShowDelete}
+                isMobile={isMobile}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      {cartItems.length > 0 && (
+        <div className="flex justify-end my-20">
+          <div className="w-full sm:w-[450px]">
+            <CartTotal
               selectedItems={selectedItems}
-              handleCheckboxChange={handleCheckboxChange}
-              handleDecrement={handleDecrement}
-              handleQuantityChange={handleQuantityChange}
-              handleIncrement={handleIncrement}
-              handleRemoveItem={handleRemoveItem}
-              currency={currency}
-              formatPrice={formatPrice}
-              showDelete={showDelete}
-              setShowDelete={setShowDelete}
-              isMobile={isMobile}
+              delivery_fee={delivery_fee}
             />
-          );
-        })}
-      </div>
-
-      <div className="flex justify-end my-20">
-        <div className="w-full sm:w-[450px]">
-          <CartTotal
-            selectedItems={selectedItems}
-            delivery_fee={delivery_fee}
-          />
-          <div className="w-full text-center sm:text-end">
-            <button
-              onClick={() =>
-                navigate("/check-out", {
-                  state: { selectedItems, delivery_fee },
-                })
-              }
-              className="bg-black text-white text-sm my-8 px-8 py-3 mx-auto sm:mx-0"
-              disabled={selectedItems.length === 0}
-            >
-              PROCEED TO CHECKOUT
-            </button>
+            <div className="w-full text-center sm:text-end">
+              <button
+                onClick={() =>
+                  navigate("/check-out", {
+                    state: { selectedItems, delivery_fee },
+                  })
+                }
+                className="bg-black text-white text-sm my-8 px-8 py-3 mx-auto sm:mx-0"
+                disabled={selectedItems.length === 0}
+              >
+                PROCEED TO CHECKOUT
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

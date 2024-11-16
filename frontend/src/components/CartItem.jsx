@@ -30,7 +30,9 @@ const CartItem = ({
       <div
         {...handlers}
         className={`relative grid grid-cols-[0.5fr_4fr_auto_0.5fr] sm:grid-cols-[0.5fr_4fr_2fr_0.5fr] items-center gap-4 transition-transform ${
-          showDelete === item.productId && isMobile ? "transform -translate-x-10" : ""
+          showDelete === item.productId && isMobile
+            ? "transform -translate-x-10"
+            : ""
         }`}
       >
         <input
@@ -54,7 +56,7 @@ const CartItem = ({
               className={`font-medium ${
                 isMobile ? "text-base" : "text-lg"
               } whitespace-nowrap overflow-hidden text-ellipsis`}
-              style={{ maxWidth: "200px" }} // Sesuaikan lebar ini sesuai tata letak Anda
+              style={{ maxWidth: "200px" }}
             >
               {productData.name}
             </p>
@@ -102,7 +104,7 @@ const CartItem = ({
             value={item.quantity}
             style={{
               fontSize: isMobile ? "12px" : "inherit",
-              height: isMobile ? "20px" : "32px",
+              height: isMobile ? "23px" : "32px",
             }}
           />
           <button
@@ -120,7 +122,7 @@ const CartItem = ({
       </div>
       {(showDelete === item.productId && isMobile) || !isMobile ? (
         <div
-          className={`absolute right-0 top-0 h-full w-12 flex items-center justify-center cursor-pointer ${
+          className={`absolute right-0 top-0 h-full w-14 flex items-center justify-center cursor-pointer ${
             isMobile ? "bg-black" : ""
           }`}
           onClick={() => handleRemoveItem(item.productId, item.size)}
@@ -128,7 +130,7 @@ const CartItem = ({
           <img
             src={assets.recycle_bin}
             alt="Remove item"
-            className={`w-4 sm:w-5 ${isMobile ? "invert" : ""}`}
+            className={`w-5  ${isMobile ? "invert" : ""}`}
           />
         </div>
       ) : null}

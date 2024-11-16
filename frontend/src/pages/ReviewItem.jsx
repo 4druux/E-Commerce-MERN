@@ -1,15 +1,19 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
-import axios from "axios";
+import React, { useState, useEffect, useMemo, useRef, useContext } from "react";
+import { ShopContext } from "../context/ShopContext";
 import { useParams, useNavigate } from "react-router-dom";
 import Title from "../components/Title";
 import { assets } from "../assets/assets";
+import { formatPrice } from "../utils/formatPrice";
+import SkeletonReviewItem from "../components/SkeletonReviewItem";
+import SweetAlert from "../components/SweetAlert";
 
 const ReviewItem = () => {
+  const { fetchProductAndReviews, submitReplyToReview, deleteReview } =
+    useContext(ShopContext);
   const { productId } = useParams();
   const [reviews, setReviews] = useState([]);
-  const [product, setProduct] = useState(null); // Data product tetap digunakan
+  const [product, setProduct] = useState(null);
   const [averageRating, setAverageRating] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [selectedRatingFilter, setSelectedRatingFilter] = useState(0);
   const [selectedSizeFilter, setSelectedSizeFilter] = useState("");
   const [selectedDateFilter, setSelectedDateFilter] = useState("");
@@ -27,49 +31,24 @@ const ReviewItem = () => {
   const navigate = useNavigate();
   const allSizes = ["S", "M", "L", "XL", "XXL"];
 
+  const [isloading, setIsLoading] = useState(true);
+  const [isReply, setIsReply] = useState();
+  const [isDelete, setIsDelete] = useState();
+
   // Fetching product and reviews
   useEffect(() => {
-    const fetchProductAndReviews = async () => {
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        console.error("Token tidak ditemukan. Harap login kembali.");
-        return;
-      }
-
-      try {
-        const productResponse = await axios.get(
-          `https://ecommerce-backend-ebon-six.vercel.app/api/products/${productId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        const reviewResponse = await axios.get(
-          `https://ecommerce-backend-ebon-six.vercel.app/api/products/admin/${productId}/reviews`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        const reviewsData = reviewResponse.data.reviews || [];
-        const avgRating = calculateAverageRating(reviewsData);
-        setAverageRating(avgRating);
-
-        setProduct(productResponse.data); // Set the product data
-        setReviews(reviewsData); // Set the reviews data
-        setLoading(false);
-      } catch (error) {
-        console.error("Gagal mendapatkan data produk atau review", error);
-        setLoading(false);
-      }
+    const getData = async () => {
+      const { product, reviews } = await fetchProductAndReviews(productId);
+      // setTimeout(() => {
+      setProduct(product);
+      setReviews(reviews);
+      setAverageRating(calculateAverageRating(reviews));
+      setIsLoading(false);
+      // }, 600000);
     };
 
-    fetchProductAndReviews();
-  }, [productId]); // No need to include product.reviews in the dependency array
+    getData();
+  }, [productId, fetchProductAndReviews]);
 
   // Tutup Dropdown dengan klik luar konten
   useEffect(() => {
@@ -101,50 +80,27 @@ const ReviewItem = () => {
 
   // Handler untuk balasan admin
   const handleReplySubmit = async (reviewId) => {
-    const token = localStorage.getItem("authToken");
-    try {
-      await axios.put(
-        `https://ecommerce-backend-ebon-six.vercel.app/api/products/admin/${productId}/reviews/${reviewId}/reply`,
-        { adminReply: replyText },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      setReviews((prevReviews) =>
-        prevReviews.map((review) =>
-          review._id === reviewId
-            ? { ...review, adminReply: replyText }
-            : review
-        )
-      );
-      setReplyText("");
-      setCurrentReplyId(null);
-    } catch (error) {
-      console.error("Gagal mengirim balasan", error);
-    }
+    setIsReply(true);
+    await submitReplyToReview(productId, reviewId, replyText);
+    setReviews((prevReviews) =>
+      prevReviews.map((review) =>
+        review._id === reviewId ? { ...review, adminReply: replyText } : review
+      )
+    );
+    setReplyText("");
+    setCurrentReplyId(null);
+    setIsReply(false);
   };
 
   // Handler untuk menghapus review
-  const handleDeleteReview = async (reviewId) => {
-    const token = localStorage.getItem("authToken");
-    try {
-      await axios.delete(
-        `https://ecommerce-backend-ebon-six.vercel.app/api/products/admin/${productId}/reviews/${reviewId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      setReviews((prevReviews) =>
-        prevReviews.filter((review) => review._id !== reviewId)
-      );
-    } catch (error) {
-      console.error("Gagal menghapus review", error);
-    }
-  };
+  // const handleDeleteReview = async (reviewId) => {
+  //   setIsDelete(true);
+  //   await deleteReview(productId, reviewId);
+  //   setReviews((prevReviews) =>
+  //     prevReviews.filter((review) => review._id !== reviewId)
+  //   );
+  //   setIsDelete(false);
+  // };
 
   // Fungsi Rata-Rata Rating
   const calculateAverageRating = (reviews) => {
@@ -171,14 +127,13 @@ const ReviewItem = () => {
         <span>Filter by Rating</span>
         {rating > 0 && (
           <span className="ml-2 flex items-center">
-            <span className="mr-1">(</span> {/* Tambahkan margin ke kanan */}
+            <span className="mr-1">(</span> 
             <img
               src={assets.star_icon}
               alt="Star"
               className="w-4 h-4 text-yellow-500"
             />
             <span className="ml-1">{rating})</span>{" "}
-            {/* Tambahkan rating dan tutup kurung */}
           </span>
         )}
       </div>
@@ -192,9 +147,9 @@ const ReviewItem = () => {
         <span>Filter by Size</span>
         {selectedSize && (
           <span className="ml-2 flex items-center">
-            <span className="mr-1">(</span> {/* Tambahkan margin ke kanan */}
+            <span className="mr-1">(</span>
             <span>{selectedSize}</span>
-            <span className="ml-1">)</span> {/* Tambahkan tanda tutup kurung */}
+            <span className="ml-1">)</span> 
           </span>
         )}
       </div>
@@ -206,32 +161,30 @@ const ReviewItem = () => {
     return (
       <div className="flex flex-col gap-2">
         {[...Array(5)].map((_, rowIndex) => {
-          const starCount = 5 - rowIndex; // Menentukan jumlah bintang per baris
-          const reviewCount = countReviewsByRating(starCount); // Hitung jumlah ulasan per rating
+          const starCount = 5 - rowIndex; 
+          const reviewCount = countReviewsByRating(starCount); 
 
           return (
             <button
               key={rowIndex}
-              onClick={() => handleRatingFilterChange(starCount)} // Klik seluruh baris untuk filter
+              onClick={() => handleRatingFilterChange(starCount)} 
               className="border border-gray-300 p-2 rounded-md hover:bg-gray-100 transition focus:outline-none w-full flex items-center justify-between"
             >
-              {/* Render bintang */}
               <div className="flex">
                 {[...Array(starCount)].map((_, starIndex) => (
                   <img
                     key={starIndex}
                     src={
                       starCount === rating
-                        ? assets.star_icon // Filled star
-                        : assets.star_dull_icon // Unfilled star
+                        ? assets.star_icon 
+                        : assets.star_dull_icon 
                     }
                     alt={`${starCount} Star`}
-                    className="w-5 h-5 mx-1" // Ukuran bintang dan spasi antar bintang
+                    className="w-5 h-5 mx-1" 
                   />
                 ))}
               </div>
 
-              {/* Tampilkan jumlah ulasan di samping baris bintang */}
               <span className="ml-2 text-sm text-gray-600">
                 ({reviewCount})
               </span>
@@ -355,343 +308,380 @@ const ReviewItem = () => {
   const countReviewsByRating = (rating) =>
     reviews.filter((review) => review.rating === rating).length;
 
-  // Renders
-  if (loading) {
-    return (
-      <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
-        <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
-      </div>
-    );
-  }
+  const handleDeleteReview = async (reviewId) => {
+    SweetAlert({
+      title: "Delete Confirmation",
+      message: "Are you sure you want to delete this review?",
+      icon: "warning",
+      buttons: true,
+      dangerMode: true,
+      closeOnClickOutside: true,
+    }).then(async (willDelete) => {
+      if (willDelete) {
+        setIsDelete(true);
+        await deleteReview(productId, reviewId);
+        setReviews((prevReviews) =>
+          prevReviews.filter((review) => review._id !== reviewId)
+        );
+        setIsDelete(false);
+  
+        SweetAlert({
+          title: "Review Deleted",
+          message: "The review has been successfully deleted.",
+          icon: "success",
+          buttons: true,
+          closeOnClickOutside: true,
+        });
+      }
+    });
+  };
+  
 
   return (
     <div className="px-4 py-8 sm:px-6 lg:px-0 max-w-6xl mx-auto">
       <div className="flex items-center mb-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full hover:bg-gray-200 shadow-lg transition-all duration-300"
-        >
-          <img
-            src={assets.left_icon}
-            alt="Back"
-            className="w-5 h-5 transform transition-transform duration-300 hover:scale-110"
-          />
-        </button>
-        <div className="ml-4 text-2xl ">
+        <div className="text-2xl ">
           <Title text1={"PRODUCT"} text2={"REVIEW"} />
         </div>
       </div>
 
-      {/* Tampilkan data produk */}
-      {product && (
-        <div className="border p-6 rounded-lg shadow-md bg-white mb-8 transition-all duration-300 hover:shadow-2xl hover:border-gray-300">
-          <div className="flex flex-col md:flex-row items-start">
-            {product.image && product.image.length > 0 && (
-              <div className="w-full md:w-1/3 mb-4 md:mb-0 md:mr-6">
-                <img
-                  src={product.image[0]}
-                  alt={product.name}
-                  className="w-full h-auto max-h-64 object-contain rounded-lg"
-                />
-              </div>
-            )}
-            <div className="flex flex-col space-y-4 w-full">
-              <h1 className="font-medium text-2xl mt-2">{product.name}</h1>
-              <div className="flex items-center gap-1 mt-2">
-                {renderSingleStarWithRating(averageRating, reviews.length)}
-              </div>
-              <p className="text-gray-600 text-sm md:text-base">
-                {product.description}
-              </p>
-              <div className="flex flex-col space-y-2 mt-2 text-sm md:text-base">
-                <p className="text-gray-700">
-                  <strong>Category:</strong> {product.category}
-                </p>
-                <p className="text-gray-700">
-                  <strong>Sub Category:</strong> {product.subCategory}
-                </p>
-                <p className="text-gray-700">
-                  <strong>Price:</strong> Rp{product.price.toLocaleString()}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="flex justify-end w-full mb-4">
-        <button
-          onClick={toggleFilterMenu}
-          className={`border px-5 py-3 text-sm ${
-            isFilterMenuOpen ? "font-bold border-black" : ""
-          }`}
-        >
-          Filters
-        </button>
-      </div>
-
-      {isFilterMenuOpen && (
-        <div className="my-4 border p-4">
-          <div className="flex flex-wrap gap-4 justify-start">
-            {/* All Button */}
-            <button
-              className={`border px-5 py-3 text-sm flex flex-col items-center justify-center w-full sm:w-auto ${
-                !selectedRatingFilter && !selectedSizeFilter && !showImageOnly
-                  ? "font-bold border-black"
-                  : ""
-              }`}
-              onClick={() => {
-                setSelectedRatingFilter(0);
-                setSelectedSizeFilter("");
-                setShowImageOnly(false);
-              }}
+      {isloading ? (
+        <SkeletonReviewItem />
+      ) : (
+        <>
+          {/* Tampilkan data produk */}
+          {product && (
+            <div
+              className="border p-6 rounded-lg shadow-md bg-white mb-8 transition-all duration-300 hover:shadow-2xl hover:border-gray-300 cursor-pointer"
+              onClick={() => navigate(-1)}
             >
-              All
-              <span className="text-xs mt-1">({countAllReviews})</span>
-            </button>
-
-            {/* With Image Button */}
-            <button
-              className={`border px-5 py-3 text-sm flex flex-col items-center justify-center w-full sm:w-auto ${
-                showImageOnly ? "font-bold border-black" : ""
-              }`}
-              onClick={() => setShowImageOnly(!showImageOnly)}
-            >
-              With Image
-              <span className="text-xs mt-1">({countReviewsWithImage})</span>
-            </button>
-
-            {/* Filter by Rating Dropdown */}
-            <div className="relative w-full sm:w-auto" ref={ratingDropdownRef}>
-              <button
-                onClick={() => setIsRatingDropdownOpen(!isRatingDropdownOpen)}
-                className={`border px-4 py-3 text-sm flex flex-col items-center justify-center w-full sm:w-auto ${
-                  selectedRatingFilter ? "font-bold border-black" : ""
-                }`}
-              >
-                {renderStarRatingLabel(selectedRatingFilter)}
-                <span className="text-xs mt-1">
-                  ({countReviewsByRating(selectedRatingFilter)})
-                </span>
-              </button>
-
-              {isRatingDropdownOpen && (
-                <div
-                  className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-10 p-2"
-                  style={{ minWidth: "200px" }} // Menjaga ukuran konsisten
-                >
-                  <div className="flex flex-col items-start gap-2">
-                    {renderModernStars(
-                      selectedRatingFilter,
-                      handleRatingFilterChange
-                    )}
+              <div className="flex flex-col md:flex-row items-start">
+                {product.image && product.image.length > 0 && (
+                  <div className="w-full md:w-1/3 mb-4 md:mb-0 md:mr-6">
+                    <img
+                      src={product.image[0]}
+                      alt={product.name}
+                      className="w-full h-auto max-h-64 object-contain rounded-lg"
+                    />
+                  </div>
+                )}
+                <div className="flex flex-col space-y-4 w-full">
+                  <h1 className="font-medium text-2xl mt-2">{product.name}</h1>
+                  <div className="flex items-center gap-1 mt-2">
+                    {renderSingleStarWithRating(averageRating, reviews.length)}
+                  </div>
+                  <p className="text-gray-600 text-sm md:text-base">
+                    {product.description}
+                  </p>
+                  <div className="flex flex-col space-y-2 mt-2 text-sm md:text-base">
+                    <p className="text-gray-700">
+                      <strong>Category:</strong> {product.category}
+                    </p>
+                    <p className="text-gray-700">
+                      <strong>Sub Category:</strong> {product.subCategory}
+                    </p>
+                    <p className="text-gray-700">
+                      <strong>Price:</strong> Rp
+                      {formatPrice(product.price || 0)}
+                    </p>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
+          )}
 
-            {/* Filter by Size Dropdown */}
-            <div
-              className="relative inline-block w-full sm:w-auto"
-              ref={sizeDropdownRef}
+          <div className="flex justify-end w-full mb-4">
+            <button
+              onClick={toggleFilterMenu}
+              className={`border px-5 py-3 text-sm ${
+                isFilterMenuOpen ? "font-bold border-black" : ""
+              }`}
             >
-              <button
-                onClick={() => setIsSizeDropdownOpen(!isSizeDropdownOpen)}
-                className={`border px-5 py-3 text-sm flex flex-col items-center justify-center w-full sm:w-auto ${
-                  selectedSizeFilter ? "font-bold border-black" : ""
-                }`}
-              >
-                {renderSizeLabel(selectedSizeFilter)}
-              </button>
+              Filters
+            </button>
+          </div>
 
-              {isSizeDropdownOpen && (
-                <div className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-10 sm:w-auto">
-                  <div className="flex sm:justify-between justify-center gap-2 p-2">
-                    {renderModernSizes(
-                      selectedSizeFilter,
-                      handleSizeFilterChange
-                    ).props.children.map((button, i) => (
-                      <button
-                        key={i}
-                        onClick={button.props.onClick}
-                        className={`w-12 h-10 flex items-center justify-center border rounded-md text-sm transition-transform transform ${
-                          selectedSizeFilter === button.props.children
-                            ? "bg-gray-950 text-white"
-                            : reviews
+          {isFilterMenuOpen && (
+            <div className="my-4 border p-4">
+              <div className="flex flex-wrap gap-4 justify-start">
+                {/* All Button */}
+                <button
+                  className={`border px-5 py-3 text-sm flex flex-col items-center justify-center w-full sm:w-auto ${
+                    !selectedRatingFilter &&
+                    !selectedSizeFilter &&
+                    !showImageOnly
+                      ? "font-bold border-black"
+                      : ""
+                  }`}
+                  onClick={() => {
+                    setSelectedRatingFilter(0);
+                    setSelectedSizeFilter("");
+                    setShowImageOnly(false);
+                  }}
+                >
+                  All
+                  <span className="text-xs mt-1">({countAllReviews})</span>
+                </button>
+
+                {/* With Image Button */}
+                <button
+                  className={`border px-5 py-3 text-sm flex flex-col items-center justify-center w-full sm:w-auto ${
+                    showImageOnly ? "font-bold border-black" : ""
+                  }`}
+                  onClick={() => setShowImageOnly(!showImageOnly)}
+                >
+                  With Image
+                  <span className="text-xs mt-1">
+                    ({countReviewsWithImage})
+                  </span>
+                </button>
+
+                {/* Filter by Rating Dropdown */}
+                <div
+                  className="relative w-full sm:w-auto"
+                  ref={ratingDropdownRef}
+                >
+                  <button
+                    onClick={() =>
+                      setIsRatingDropdownOpen(!isRatingDropdownOpen)
+                    }
+                    className={`border px-4 py-3 text-sm flex flex-col items-center justify-center w-full sm:w-auto ${
+                      selectedRatingFilter ? "font-bold border-black" : ""
+                    }`}
+                  >
+                    {renderStarRatingLabel(selectedRatingFilter)}
+                    <span className="text-xs mt-1">
+                      ({countReviewsByRating(selectedRatingFilter)})
+                    </span>
+                  </button>
+
+                  {isRatingDropdownOpen && (
+                    <div
+                      className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-10 p-2"
+                      style={{ minWidth: "200px" }}
+                    >
+                      <div className="flex flex-col items-start gap-2">
+                        {renderModernStars(
+                          selectedRatingFilter,
+                          handleRatingFilterChange
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Filter by Size Dropdown */}
+                <div
+                  className="relative inline-block w-full sm:w-auto"
+                  ref={sizeDropdownRef}
+                >
+                  <button
+                    onClick={() => setIsSizeDropdownOpen(!isSizeDropdownOpen)}
+                    className={`border px-5 py-3 text-sm flex flex-col items-center justify-center w-full sm:w-auto ${
+                      selectedSizeFilter ? "font-bold border-black" : ""
+                    }`}
+                  >
+                    {renderSizeLabel(selectedSizeFilter)}
+                  </button>
+
+                  {isSizeDropdownOpen && (
+                    <div className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-10 sm:w-auto">
+                      <div className="flex sm:justify-between justify-center gap-2 p-2">
+                        {renderModernSizes(
+                          selectedSizeFilter,
+                          handleSizeFilterChange
+                        ).props.children.map((button, i) => (
+                          <button
+                            key={i}
+                            onClick={button.props.onClick}
+                            className={`w-12 h-10 flex items-center justify-center border rounded-md text-sm transition-transform transform ${
+                              selectedSizeFilter === button.props.children
+                                ? "bg-gray-950 text-white"
+                                : reviews
+                                    .map((review) => review.size)
+                                    .includes(button.props.children)
+                                ? "bg-gray-100 hover:bg-gray-200"
+                                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                            } ${
+                              reviews
                                 .map((review) => review.size)
                                 .includes(button.props.children)
-                            ? "bg-gray-100 hover:bg-gray-200"
-                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        } ${
-                          reviews
-                            .map((review) => review.size)
-                            .includes(button.props.children)
-                            ? "hover:scale-105"
-                            : ""
-                        } focus:outline-none`}
-                        disabled={button.props.disabled}
-                      >
-                        {button.props.children}
-                      </button>
-                    ))}
-                  </div>
+                                ? "hover:scale-105"
+                                : ""
+                            } focus:outline-none`}
+                            disabled={button.props.disabled}
+                          >
+                            {button.props.children}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
+
+                {/* Filter by Date Dropdown */}
+                <div
+                  className="relative inline-block w-full sm:w-auto"
+                  ref={dateDropdownRef}
+                >
+                  <button
+                    onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
+                    className={`border px-5 py-3 text-sm flex flex-col items-center justify-center w-full sm:w-auto ${
+                      selectedDateFilter ? "font-bold border-black" : ""
+                    }`}
+                  >
+                    {selectedDateFilter
+                      ? `Filter by Date: ${
+                          selectedDateFilter === "latest" ? "Newest" : "Oldest"
+                        }`
+                      : "Filter by Date"}
+                  </button>
+
+                  {isDateDropdownOpen && (
+                    <div className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-10 sm:w-auto">
+                      <div className="flex sm:justify-between justify-center gap-2 p-2">
+                        <button
+                          onClick={() => handleDateFilterChange("latest")}
+                          className={`w-full sm:w-auto px-4 py-2 text-sm rounded-md transition-colors duration-200 ${
+                            selectedDateFilter === "latest"
+                              ? "bg-black text-white"
+                              : "bg-white text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                          }`}
+                        >
+                          Newest
+                        </button>
+                        <button
+                          onClick={() => handleDateFilterChange("oldest")}
+                          className={`w-full sm:w-auto px-4 py-2 text-sm rounded-md transition-colors duration-200 ${
+                            selectedDateFilter === "oldest"
+                              ? "bg-black text-white"
+                              : "bg-white text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                          }`}
+                        >
+                          Oldest
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
+          )}
 
-            {/* Filter by Date Dropdown */}
-            <div
-              className="relative inline-block w-full sm:w-auto"
-              ref={dateDropdownRef}
-            >
-              <button
-                onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
-                className={`border px-5 py-3 text-sm flex flex-col items-center justify-center w-full sm:w-auto ${
-                  selectedDateFilter ? "font-bold border-black" : ""
-                }`}
-              >
-                {selectedDateFilter
-                  ? `Filter by Date: ${
-                      selectedDateFilter === "latest" ? "Newest" : "Oldest"
-                    }`
-                  : "Filter by Date"}
-              </button>
-
-              {isDateDropdownOpen && (
-                <div className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-10 sm:w-auto">
-                  <div className="flex sm:justify-between justify-center gap-2 p-2">
-                    <button
-                      onClick={() => handleDateFilterChange("latest")}
-                      className={`w-full sm:w-auto px-4 py-2 text-sm rounded-md transition-colors duration-200 ${
-                        selectedDateFilter === "latest"
-                          ? "bg-black text-white"
-                          : "bg-white text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                      }`}
-                    >
-                      Newest
-                    </button>
-                    <button
-                      onClick={() => handleDateFilterChange("oldest")}
-                      className={`w-full sm:w-auto px-4 py-2 text-sm rounded-md transition-colors duration-200 ${
-                        selectedDateFilter === "oldest"
-                          ? "bg-black text-white"
-                          : "bg-white text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                      }`}
-                    >
-                      Oldest
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Menampilkan review yang difilter */}
-      {filteredReviews.length === 0 ? (
-        <p className="text-center mt-8 text-gray-600">
-          Tidak ada review untuk produk ini.
-        </p>
-      ) : (
-        <div className="space-y-6 mt-8">
-          {filteredReviews.map((review) => (
-            <div
-              key={review._id}
-              className="border p-6 rounded-md shadow-lg bg-white flex flex-col justify-between items-start transition-all duration-300 hover:shadow-xl relative"
-            >
-              <div className="flex flex-col space-y-2 w-full">
-                <p className="font-semibold text-gray-800">{review.username}</p>
-
-                <div className="flex items-center">
-                  {renderStars(review.rating)}
-                </div>
-
-                <p className="text-sm text-gray-500">
-                  <strong>Size:</strong> {review.size}
-                </p>
-
-                <p className="text-sm text-gray-600">{review.reviewText}</p>
-
-                {review.reviewImages && review.reviewImages.length > 0 && (
-                  <div className="flex gap-2 mt-2">
-                    {review.reviewImages.map((img, imgIndex) => (
-                      <img
-                        key={imgIndex}
-                        src={img}
-                        alt={`Review Image ${imgIndex + 1}`}
-                        className="w-24 h-24 object-cover rounded-md shadow-md"
-                      />
-                    ))}
-                  </div>
-                )}
-
-                {review.adminReply && (
-                  <div className="mt-4 p-4 bg-gray-100 rounded-md shadow-inner">
-                    <p className="text-gray-800 font-semibold">
-                      Balasan Admin:
+          {/* Menampilkan review yang difilter */}
+          {filteredReviews.length === 0 ? (
+            <p className="text-center mt-8 text-gray-600">
+              Tidak ada review untuk produk ini.
+            </p>
+          ) : (
+            <div className="space-y-6 mt-8">
+              {filteredReviews.map((review) => (
+                <div
+                  key={review._id}
+                  className="border p-6 rounded-md shadow-lg bg-white flex flex-col justify-between items-start transition-all duration-300 hover:shadow-xl relative"
+                >
+                  <div className="flex flex-col space-y-2 w-full">
+                    <p className="font-semibold text-gray-800">
+                      {review.username}
                     </p>
-                    <p className="text-gray-700">{review.adminReply}</p>
+
+                    <div className="flex items-center">
+                      {renderStars(review.rating)}
+                    </div>
+
+                    <p className="text-sm text-gray-500">
+                      <strong>Size:</strong> {review.size}
+                    </p>
+
+                    <p className="text-sm text-gray-600">{review.reviewText}</p>
+
+                    {review.reviewImages && review.reviewImages.length > 0 && (
+                      <div className="flex gap-2 mt-2">
+                        {review.reviewImages.map((img, imgIndex) => (
+                          <img
+                            key={imgIndex}
+                            src={img}
+                            alt={`Review Image ${imgIndex + 1}`}
+                            className="w-24 h-24 object-cover rounded-md shadow-md"
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {review.adminReply && (
+                      <div className="mt-4 p-4 bg-gray-100 rounded-md shadow-inner">
+                        <p className="text-gray-800 font-semibold">
+                          Balasan Admin:
+                        </p>
+                        <p className="text-gray-700">{review.adminReply}</p>
+                      </div>
+                    )}
+
+                    <p className="text-gray-400 text-xs mt-2">
+                      {new Intl.DateTimeFormat("en-GB", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      }).format(new Date(review.createdAt))}
+                    </p>
+
+                    {currentReplyId === review._id ? (
+                      <div className="mt-4 flex flex-col space-y-2">
+                        <textarea
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          placeholder="Tulis balasan admin..."
+                          className="border p-2 rounded-md shadow-sm"
+                        />
+                        <button
+                          onClick={() => handleReplySubmit(review._id)}
+                          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-all"
+                        >
+                          Kirim Balasan
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
-                )}
 
-                <p className="text-gray-400 text-xs mt-2">
-                  {new Intl.DateTimeFormat("en-GB", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                  }).format(new Date(review.createdAt))}
-                </p>
-
-                {currentReplyId === review._id ? (
-                  <div className="mt-4 flex flex-col space-y-2">
-                    <textarea
-                      value={replyText}
-                      onChange={(e) => setReplyText(e.target.value)}
-                      placeholder="Tulis balasan admin..."
-                      className="border p-2 rounded-md shadow-sm"
-                    />
+                  <div className="flex justify-end items-center space-x-2 mt-4 w-full">
                     <button
-                      onClick={() => handleReplySubmit(review._id)}
-                      className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-all"
+                      className="border border-black px-4 py-2 rounded-md hover:bg-black transition-all duration-500 group"
+                      onClick={() =>
+                        currentReplyId === review._id
+                          ? setCurrentReplyId(null)
+                          : setCurrentReplyId(review._id)
+                      }
                     >
-                      Kirim Balasan
+                      <img
+                        src={assets.chat_icon}
+                        alt="Chat"
+                        className="w-6 h-6 filter group-hover:invert"
+                      />
+                    </button>
+
+                    <button
+                      onClick={() => handleDeleteReview(review._id)}
+                      className="bg-black px-4 py-2 rounded-md active:bg-gray-800 transition-all duration-300"
+                    >
+                      <img
+                        src={assets.recycle_bin}
+                        alt="Delete"
+                        className="w-6 h-6 filter invert contrast-200 brightness-200"
+                      />
                     </button>
                   </div>
-                ) : null}
-              </div>
-
-              <div className="flex justify-end items-center space-x-2 mt-4 w-full">
-                <button
-                  className="border border-black px-4 py-2 rounded-md hover:bg-black transition-all duration-500 group"
-                  onClick={() =>
-                    currentReplyId === review._id
-                      ? setCurrentReplyId(null)
-                      : setCurrentReplyId(review._id)
-                  }
-                >
-                  <img
-                    src={assets.chat_icon}
-                    alt="Chat"
-                    className="w-6 h-6 filter group-hover:invert"
-                  />
-                </button>
-
-                <button
-                  onClick={() => handleDeleteReview(review._id)}
-                  className="bg-black px-4 py-2 rounded-md active:bg-gray-800 transition-all duration-300"
-                >
-                  <img
-                    src={assets.recycle_bin}
-                    alt="Delete"
-                    className="w-6 h-6 filter invert contrast-200 brightness-200"
-                  />
-                </button>
-              </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
+      {isReply ||
+        (isDelete && (
+          <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+            <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
+          </div>
+        ))}
     </div>
   );
 };

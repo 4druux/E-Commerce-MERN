@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { ShopContext } from "../context/ShopContext";
+import SkeletonEditItem from "../components/SkeletonEditItem"; 
 import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css"; // Pastikan ini diimpor jika belum
+import "react-toastify/dist/ReactToastify.css"; 
 import Title from "../components/Title";
 import { assets } from "../assets/assets";
-import { formatPrice, unformatPrice } from "../utils/formatPrice";
+import { formatPrice } from "../utils/formatPrice";
 
 // Import Swiper components
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -16,6 +17,7 @@ import "swiper/css";
 import "swiper/css/pagination";
 
 const EditItem = () => {
+  const { fetchProductsById, updateProduct } = useContext(ShopContext);
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -39,59 +41,68 @@ const EditItem = () => {
     bestseller: false,
   });
 
-  const [originalData, setOriginalData] = useState(null); // Store the original data
-  const [isChanged, setIsChanged] = useState(false); // Track changes
-  const [isLoading, setIsLoading] = useState(false); // Track loading
+  const [originalData, setOriginalData] = useState(null);
+  const [isChanged, setIsChanged] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasFetched, setHasFetched] = useState(false);
 
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const response = await axios.get(
-          `https://ecommerce-backend-ebon-six.vercel.app/api/products/${id}`
-        );
-        const product = response.data;
+    if (!hasFetched) {
+      const fetchProduct = async () => {
+        setIsLoading(true);
+        try {
+          const product = await fetchProductsById(id);
 
-        setFormData({
-          name: product.name,
-          description: product.description,
-          price: formatPrice(product.price.toString()), // Format harga dari database
-          category: product.category,
-          subCategory: product.subCategory,
-          sizes: product.sizes,
-          bestseller: product.bestseller,
-        });
+          if (product) {
+            setFormData({
+              name: product.name,
+              description: product.description,
+              price: formatPrice(product.price.toString()),
+              category: product.category,
+              subCategory: product.subCategory,
+              sizes: product.sizes,
+              bestseller: product.bestseller,
+            });
+            setImageURLs(product.image || []);
+            setOriginalData({
+              name: product.name,
+              description: product.description,
+              price: formatPrice(product.price.toString()),
+              category: product.category,
+              subCategory: product.subCategory,
+              sizes: product.sizes,
+              bestseller: product.bestseller,
+              image: product.image || [],
+            });
 
-        setImageURLs(product.image || []);
-        setOriginalData({
-          name: product.name,
-          description: product.description,
-          price: formatPrice(product.price.toString()), // Format harga dari database
-          category: product.category,
-          subCategory: product.subCategory,
-          sizes: product.sizes,
-          bestseller: product.bestseller,
-          image: product.image || [],
-        });
+            const sizesState = {
+              S: false,
+              M: false,
+              L: false,
+              XL: false,
+              XXL: false,
+            };
+            product.sizes.forEach((size) => {
+              sizesState[size] = true;
+            });
+            setAvailableSizes(sizesState);
+          } else {
+            toast.error("Failed to fetch product.");
+          }
+        } catch (error) {
+          console.error("Error fetching product:", error);
+          toast.error("Error fetching product.");
+        } finally {
+          // await new Promise(resolve => setTimeout(resolve, 2000));
+          setIsLoading(false);
+          setHasFetched(true);
+        }
+      };
 
-        const sizesState = {
-          S: false,
-          M: false,
-          L: false,
-          XL: false,
-          XXL: false,
-        };
-        product.sizes.forEach((size) => {
-          sizesState[size] = true;
-        });
-        setAvailableSizes(sizesState);
-      } catch (error) {
-        console.error("Failed to fetch product", error);
-        toast.error("Failed to fetch product.");
-      }
-    };
-
-    fetchProduct();
-  }, [id]);
+      fetchProduct();
+    }
+  }, [id, fetchProductsById, hasFetched]);
 
   // Fungsi untuk mengubah ukuran gambar
   const resizeImage = (file, maxWidth, maxHeight) => {
@@ -147,7 +158,7 @@ const EditItem = () => {
     const file = event.target.files[0];
     if (file) {
       try {
-        const resizedBlob = await resizeImage(file, 500, 550); // Ubah ukuran gambar menjadi 500x500
+        const resizedBlob = await resizeImage(file, 500, 550); 
         const resizedFile = new File([resizedBlob], file.name, {
           type: file.type,
         });
@@ -161,7 +172,7 @@ const EditItem = () => {
           urls[index] = reader.result;
           setImages(files);
           setImageURLs(urls);
-          setIsChanged(true); // Tandai sebagai berubah
+          setIsChanged(true); 
         };
         reader.readAsDataURL(resizedFile);
       } catch (error) {
@@ -178,7 +189,7 @@ const EditItem = () => {
     urls[index] = null;
     setImages(files);
     setImageURLs(urls);
-    setIsChanged(true); // Mark as changed
+    setIsChanged(true);
   };
 
   const handleSizeToggle = (size) => {
@@ -196,7 +207,7 @@ const EditItem = () => {
         !isChanged &&
         newSizes.sort().join() !== originalData.sizes.sort().join()
       ) {
-        setIsChanged(true); // Mark as changed
+        setIsChanged(true); 
       }
 
       return {
@@ -213,15 +224,15 @@ const EditItem = () => {
 
     if (name === "price") {
       if (value === "") {
-        formattedValue = ""; // Kosongkan input jika tidak ada angka
+        formattedValue = ""; 
       } else {
-        formattedValue = formatPrice(value.replace(/^0+/, "")); // Hilangkan awalan nol dan format harga
+        formattedValue = formatPrice(value.replace(/^0+/, "")); 
       }
     }
 
     setFormData((prevState) => {
       if (!isChanged && formattedValue !== originalData[name]) {
-        setIsChanged(true); // Tandai sebagai berubah
+        setIsChanged(true);
       }
 
       return {
@@ -235,49 +246,24 @@ const EditItem = () => {
     if (images.length < 5) {
       setImages([...images, null]);
       setImageURLs([...imageURLs, null]);
-      setIsChanged(true); // Mark as changed
+      setIsChanged(true); 
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSaving(true); 
 
-    if (!formData.price || formData.price === "0") {
-      toast.error("Please enter a valid price.");
-      return; // Jangan lanjutkan jika harga kosong atau nol
-    }
-
-    setIsLoading(true); // Start loading
-
-    try {
-      const formattedData = {
-        ...formData,
-        price: unformatPrice(formData.price), // Menghapus tanda titik sebelum menyimpan ke database
-        image: imageURLs.filter((url) => url !== null),
-      };
-
-      await axios.put(
-        `https://ecommerce-backend-ebon-six.vercel.app/api/products/${id}`,
-        formattedData
-      );
-
-      toast.success("Product updated successfully.", {
-        position: "top-right",
-        autoClose: 3000,
-        className: "custom-toast",
-      });
-
-      setIsLoading(false); // Stop loading after success
-      navigate("/admin/list"); // Navigate to list page after success
-    } catch (error) {
-      console.error("Failed to update product", error);
-      toast.error("Failed to update product.", {
-        position: "top-right",
-        className: "custom-toast",
-      });
-      setIsLoading(false); // Stop loading in case of an error
+    const success = await updateProduct(id, formData, imageURLs, navigate);
+    setIsSaving(false); 
+    if (!success) {
+      toast.error("Failed to save product changes.");
     }
   };
+
+  if (isLoading) {
+    return <SkeletonEditItem />;
+  }
 
   return (
     <div>
@@ -316,7 +302,7 @@ const EditItem = () => {
                             <img
                               src={url}
                               alt={`Preview ${index + 1}`}
-                              className="object-cover w-full h-full" // Menggunakan object-cover untuk gambar memenuhi kontainer
+                              className="object-cover w-full h-full"
                             />
                             <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
                               <button
@@ -541,7 +527,7 @@ const EditItem = () => {
           <button
             className="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600"
             type="button"
-            onClick={() => navigate(-1)} // Cancel button
+            onClick={() => navigate(-1)} 
           >
             Cancel
           </button>
@@ -550,14 +536,14 @@ const EditItem = () => {
               !isChanged ? "bg-gray-300 cursor-not-allowed" : ""
             }`}
             type="submit"
-            disabled={!isChanged} // Disable save button if no changes
+            disabled={!isChanged} 
           >
             Save
           </button>
         </div>
       </form>
       <ToastContainer />
-      {isLoading && (
+      {isSaving && (
         <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
           <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
         </div>

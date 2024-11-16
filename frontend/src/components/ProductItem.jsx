@@ -2,54 +2,42 @@ import React, { useEffect, useState, useContext } from "react";
 import { ShopContext } from "../context/ShopContext";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
-import axios from "axios";
 import { formatPrice } from "../utils/formatPrice";
 import { assets } from "../assets/assets";
 
 const ProductItem = ({ id, image, name, price }) => {
-  const { currency } = useContext(ShopContext);
+  const { currency, fetchProductsById } = useContext(ShopContext);
   const [averageRating, setAverageRating] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
 
-  // Pastikan image adalah array, jika bukan, konversi menjadi array
   const images = Array.isArray(image) ? image : [image];
 
-  // Fungsi untuk menghitung rata-rata rating
   const calculateAverageRating = (reviews) => {
     if (reviews.length === 0) return 0;
     const totalRating = reviews.reduce((acc, review) => acc + review.rating, 0);
     return totalRating / reviews.length;
   };
 
-  // Fetch data rating dan review dari backend
   useEffect(() => {
-    const fetchProductRating = async () => {
-      try {
-        const response = await axios.get(
-          `https://ecommerce-backend-ebon-six.vercel.app/api/products/${id}`
-        );
-        const product = response.data;
+    const fetchData = async () => {
+      const product = await fetchProductsById(id);
+      if (product) {
         setAverageRating(calculateAverageRating(product.reviews));
         setReviewCount(product.reviews.length);
-      } catch (error) {
-        console.error("Failed to fetch product rating", error);
       }
     };
-
-    fetchProductRating();
-  }, [id]);
+    fetchData();
+  }, [id, fetchProductsById]);
 
   // Fungsi untuk render bintang rating
   const renderSingleStarWithRating = (rating, reviewCount) => {
     return (
       <div className="flex items-center">
-        {/* Hanya render satu bintang */}
         <img
           src={assets.star_icon}
           alt="Star"
           className="w-3 h-3 text-yellow-500"
         />
-        {/* Menampilkan rating dan jumlah review setelah bintang */}
         <span className="ml-2 text-gray-800 text-xs">{rating.toFixed(1)}</span>
         <span className="ml-1 text-gray-500 text-xs">({reviewCount})</span>
       </div>
@@ -70,8 +58,8 @@ const ProductItem = ({ id, image, name, price }) => {
           />
         </div>
         <div className="p-4">
-          <p className="text-base font-semibold text-gray-900">{name}</p>
-          <div className="mt-2 inline-block border bg-orange-100 rounded px-1 py-1 align-middle">
+          <p className="text-base  text-gray-900">{name}</p>
+          <div className="mt-2 inline-block border bg-orange-50 rounded px-1 py-0.5 align-middle">
             {renderSingleStarWithRating(averageRating, reviewCount)}
           </div>
           <p className="mt-2 text-sm font-medium text-gray-900">
