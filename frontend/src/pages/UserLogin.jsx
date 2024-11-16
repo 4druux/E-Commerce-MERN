@@ -75,7 +75,7 @@ const UserLogin = () => {
     if (currentState === "Login") {
       try {
         const response = await axios.post(
-          "http://localhost:5173/api/user/login",
+          "https://ecommerce-backend-ebon-six.vercel.app/api/user/login",
           {
             email,
             password,
@@ -103,7 +103,7 @@ const UserLogin = () => {
     } else {
       try {
         const response = await axios.post(
-          "http://localhost:5173/api/user/register",
+          "https://ecommerce-backend-ebon-six.vercel.app/api/user/register",
           {
             username,
             email,

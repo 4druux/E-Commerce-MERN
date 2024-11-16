@@ -15,7 +15,7 @@ const AdminLogin = () => {
     setErrorMessage(""); 
     try {
       const response = await axios.post(
-        "http://localhost:5173/api/user/login",
+        "https://ecommerce-backend-ebon-six.vercel.app/api/user/login",
         {
           email,
           password,
