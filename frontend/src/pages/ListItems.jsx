@@ -109,7 +109,7 @@ const ListItems = () => {
         setIsDeleting(true);
         await deleteProduct(productId);
         setIsDeleting(false);
-  
+
         SweetAlert({
           title: "Product Deleted",
           message: "The product has been successfully deleted.",
@@ -120,7 +120,17 @@ const ListItems = () => {
       }
     });
   };
-  
+
+  const subCategoriesList = [
+    "Jackets",
+    "Hoodies",
+    "Sweaters",
+    "Long Sleeve Shirts",
+    "T-Shirts",
+    "Pants",
+    "Skirts",
+    "Dresses",
+  ];
 
   return (
     <div>
@@ -150,18 +160,21 @@ const ListItems = () => {
       </div>
 
       {showFilter && (
-        <div className="p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-6">
-            <div className="border border-gray-300 p-4 flex-1">
-              <p className="text-sm font-medium">CATEGORIES</p>
-              <div className="flex flex-col gap-2 mt-2 text-sm font-light text-gray-700">
+        <div className=" mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Categories */}
+            <div className="border border-gray-300 rounded-lg shadow-sm p-6 bg-white">
+              <p className="text-base font-semibold mb-4 text-gray-800">
+                CATEGORIES
+              </p>
+              <div className="grid grid-cols-1 gap-3 text-sm font-light text-gray-700">
                 <label className="flex items-center">
                   <input
                     type="checkbox"
                     value="Men"
                     onChange={toggleCategory}
                     checked={category.includes("Men")}
-                    className="mr-2"
+                    className="mr-2 accent-gray-800"
                   />
                   Men
                 </label>
@@ -171,7 +184,7 @@ const ListItems = () => {
                     value="Women"
                     onChange={toggleCategory}
                     checked={category.includes("Women")}
-                    className="mr-2"
+                    className="mr-2 accent-gray-800"
                   />
                   Women
                 </label>
@@ -181,45 +194,29 @@ const ListItems = () => {
                     value="Kids"
                     onChange={toggleCategory}
                     checked={category.includes("Kids")}
-                    className="mr-2"
+                    className="mr-2 accent-gray-800"
                   />
                   Kids
                 </label>
               </div>
             </div>
-            <div className="border border-gray-300 p-4 flex-1">
-              <p className="text-sm font-medium">TYPE</p>
-              <div className="flex flex-col gap-2 mt-2 text-sm font-light text-gray-700">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    value="Topwear"
-                    onChange={toggleSubCategory}
-                    checked={subCategory.includes("Topwear")}
-                    className="mr-2"
-                  />
-                  Topwear
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    value="Bottomwear"
-                    onChange={toggleSubCategory}
-                    checked={subCategory.includes("Bottomwear")}
-                    className="mr-2"
-                  />
-                  Bottomwear
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    value="Winterwear"
-                    onChange={toggleSubCategory}
-                    checked={subCategory.includes("Winterwear")}
-                    className="mr-2"
-                  />
-                  Winterwear
-                </label>
+
+            {/* Type */}
+            <div className="border border-gray-300 rounded-lg shadow-sm p-6 bg-white">
+              <p className="text-base font-semibold mb-4 text-gray-800">TYPE</p>
+              <div className="grid grid-cols-1 gap-3 text-sm font-light text-gray-700">
+                {subCategoriesList.map((subCategoryItem) => (
+                  <label key={subCategoryItem} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      value={subCategoryItem}
+                      onChange={toggleSubCategory}
+                      checked={subCategory.includes(subCategoryItem)}
+                      className="mr-2 accent-gray-800"
+                    />
+                    {subCategoryItem}
+                  </label>
+                ))}
               </div>
             </div>
           </div>
