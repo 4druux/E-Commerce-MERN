@@ -28,28 +28,33 @@ const UserLogin = () => {
   };
 
   const validatePasswordStrength = (password) => {
-    const hasUpperCase = /[A-Z]/.test(password);
     const hasLowerCase = /[a-z]/.test(password);
+    const hasUpperCase = /[A-Z]/.test(password);
     const hasNumber = /\d/.test(password);
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
 
-    let progress = [0, 0, 0];
-    let currentIndex = 0;
+    let progress = [0, 0, 0]; // Default semua abu-abu
 
-    if (hasLowerCase) {
-      progress[currentIndex] = 100;
-      currentIndex += 1;
+    // Hitung jumlah kriteria yang terpenuhi
+    const criteriaMet = [
+      hasLowerCase,
+      hasUpperCase,
+      hasNumber,
+      hasSpecialChar,
+    ].filter(Boolean).length;
+
+    if (criteriaMet >= 1) {
+      progress[0] = 1; // Merah
     }
-    if (hasUpperCase && currentIndex < 3) {
-      progress[currentIndex] = 100;
-      currentIndex += 1;
+    if (criteriaMet >= 2) {
+      progress[1] = 2; // Kuning
     }
-    if (hasNumber && hasSpecialChar && currentIndex < 3) {
-      progress[currentIndex] = 100;
+    if (criteriaMet >= 4) {
+      progress[2] = 3; // Hijau
     }
 
-    setProgressWidth(progress);
-    setIsPasswordStrong(progress.every((val) => val === 100));
+    setProgressWidth(progress); // Update progress
+    setIsPasswordStrong(criteriaMet === 4); // Kuat jika semua kriteria terpenuhi
   };
 
   const onSubmitHandler = async (event) => {
@@ -75,7 +80,7 @@ const UserLogin = () => {
     if (currentState === "Login") {
       try {
         const response = await axios.post(
-          "http://localhost:5173/api/user/login",
+          "https://ecommerce-backend-ebon-six.vercel.app/api/user/login",
           {
             email,
             password,
@@ -103,7 +108,7 @@ const UserLogin = () => {
     } else {
       try {
         const response = await axios.post(
-          "http://localhost:5173/api/user/register",
+          "https://ecommerce-backend-ebon-six.vercel.app/api/user/register",
           {
             username,
             email,
@@ -136,6 +141,7 @@ const UserLogin = () => {
   const toggleStateHandler = () => {
     resetInputs();
     setCurrentState(currentState === "Login" ? "Sign Up" : "Login");
+    window.scrollTo(0, 0);
   };
 
   return (
@@ -255,39 +261,85 @@ const UserLogin = () => {
       )}
 
       {/* Password Strength Indicator */}
-      {currentState === "Sign Up" && password && (
-        <div className="w-full flex gap-1 mt-2">
-          <div
-            className="h-2 flex-1 rounded transition-all duration-300"
-            style={{
-              backgroundColor: progressWidth[0] ? "#28a745" : "#e0e0e0",
-            }}
-          />
-          <div
-            className="h-2 flex-1 rounded transition-all duration-300"
-            style={{
-              backgroundColor: progressWidth[1] ? "#28a745" : "#e0e0e0",
-            }}
-          />
-          <div
-            className="h-2 flex-1 rounded transition-all duration-300"
-            style={{
-              backgroundColor: progressWidth[2] ? "#28a745" : "#e0e0e0",
-            }}
-          />
+      {currentState === "Sign Up" && (
+        <div className="w-full flex items-center gap-4 text-sm">
+          <span
+            className={`${
+              password.length >= 5 ? "text-gray-600" : "text-red-600"
+            } flex items-center gap-2`}
+          >
+            at least 5 characters
+            <div className="relative group cursor-pointer">
+              <span className="text-gray-500 text-lg">ℹ️</span>
+              <div className="absolute left-1/2 -translate-x-1/2 -top-8 w-56 p-2 text-xs z-10 text-white bg-gray-800 rounded shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200">
+                Tips for a good password:
+                <ul className="list-disc list-inside mt-1">
+                  <li>Use both upper and lowercase characters</li>
+                  <li>Include at least one symbol (# $ ! % & etc.)</li>
+                </ul>
+              </div>
+            </div>
+          </span>
+
+          {/* Progress Bar Container */}
+          <div className="flex-1 flex">
+            <div className="w-full h-3 rounded border border-gray-200 bg-white relative overflow-hidden">
+              <div
+                className="h-full rounded transition-all duration-300"
+                style={{
+                  background:
+                    progressWidth[2] === 3
+                      ? "#28a745"
+                      : progressWidth[1] === 2
+                      ? "#ffc107"
+                      : progressWidth[0] === 1
+                      ? "#ff0000"
+                      : "transparent",
+                  width:
+                    progressWidth[2] === 3
+                      ? "100%"
+                      : progressWidth[1] === 2
+                      ? "66%"
+                      : progressWidth[0] === 1
+                      ? "33%"
+                      : "0%",
+                }}
+              />
+            </div>
+          </div>
         </div>
       )}
 
-      <div className="w-full flex text-sm sm:text-xs">
-        {currentState === "Login" && (
-          <p className="text-blue-500 cursor-pointer ">Forgot your password?</p>
+      <div
+        className={`w-full ${
+          currentState === "Login" ? "flex justify-between" : "text-center"
+        } text-sm sm:text-xs`}
+      >
+        {currentState === "Login" ? (
+          <>
+            <p className="text-blue-500 cursor-pointer">
+              Forgot your password?
+            </p>
+            <p>
+              <span
+                onClick={toggleStateHandler}
+                className="text-blue-500 cursor-pointer"
+              >
+                Create account
+              </span>
+            </p>
+          </>
+        ) : (
+          <p>
+            <span className="text-black">Already have an account?</span>
+            <span
+              onClick={toggleStateHandler}
+              className="text-blue-500 cursor-pointer"
+            >
+              {" Login Here"}
+            </span>
+          </p>
         )}
-        <p
-          onClick={toggleStateHandler}
-          className="text-blue-500 cursor-pointer ml-auto"
-        >
-          {currentState === "Login" ? "Create account" : "Login Here"}
-        </p>
       </div>
 
       <button
