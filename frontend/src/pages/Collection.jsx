@@ -72,18 +72,29 @@ const Collection = () => {
     }
   }, [filteredAndSortedProducts]);
 
+  const subCategoriesList = [
+    "Jackets",
+    "Hoodies",
+    "Sweaters",
+    "Dresses",
+    "Long Sleeve Shirts",
+    "T-Shirts",
+    "Pants",
+    "Skirts",
+  ];
+
   return (
     <div className="flex flex-col sm:flex-row gap-1 sm:gap-10 pt-10 border-t">
       {/* Filter Options */}
       <div className="min-w-60">
         <p
           onClick={() => setShowFilter(!showFilter)}
-          className="my-2 text-xl flex item-center cursor-pointer"
+          className="my-2 text-xl flex items-center "
         >
           FILTERS
           <img
             src={assets.dropdown_icon}
-            className={`h-3 sm:hidden ${showFilter ? "rotate-90" : ""}`}
+            className={`h-3 ml-2 sm:hidden ${showFilter ? "rotate-90" : ""}`}
             alt=""
           />
         </p>
@@ -98,7 +109,7 @@ const Collection = () => {
           <div className="flex flex-col gap-2 text-sm font-light text-gray-700">
             <p className="flex gap-2">
               <input
-                className="w-3"
+                className="w-3 accent-gray-800"
                 type="checkbox"
                 value={"Men"}
                 onChange={toggleCategory}
@@ -107,7 +118,7 @@ const Collection = () => {
             </p>
             <p className="flex gap-2">
               <input
-                className="w-3"
+                className="w-3 accent-gray-800"
                 type="checkbox"
                 value={"Women"}
                 onChange={toggleCategory}
@@ -116,7 +127,7 @@ const Collection = () => {
             </p>
             <p className="flex gap-2">
               <input
-                className="w-3"
+                className="w-3 accent-gray-800"
                 type="checkbox"
                 value={"Kids"}
                 onChange={toggleCategory}
@@ -134,33 +145,17 @@ const Collection = () => {
         >
           <p className="mb-3 text-sm font-medium">TYPE</p>
           <div className="flex flex-col gap-2 text-sm font-light text-gray-700">
-            <p className="flex gap-2">
-              <input
-                className="w-3"
-                type="checkbox"
-                value={"Topwear"}
-                onChange={toggleSubCategory}
-              />
-              Topwear
-            </p>
-            <p className="flex gap-2">
-              <input
-                className="w-3"
-                type="checkbox"
-                value={"Bottomwear"}
-                onChange={toggleSubCategory}
-              />
-              Bottomwear
-            </p>
-            <p className="flex gap-2">
-              <input
-                className="w-3"
-                type="checkbox"
-                value={"Winterwear"}
-                onChange={toggleSubCategory}
-              />
-              Winterwear
-            </p>
+            {subCategoriesList.map((subCategory) => (
+              <p className="flex gap-2" key={subCategory}>
+                <input
+                  className="w-3 accent-gray-800"
+                  type="checkbox"
+                  value={subCategory}
+                  onChange={toggleSubCategory}
+                />
+                {subCategory}
+              </p>
+            ))}
           </div>
         </div>
       </div>
@@ -191,6 +186,12 @@ const Collection = () => {
               />
               <p className="text-lg text-gray-600">No results found</p>
             </div>
+          </div>
+        ) : filteredAndSortedProducts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center mt-10 h-96">
+            <p className="text-lg text-gray-600">
+              No products found for this category
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 gap-y-6">

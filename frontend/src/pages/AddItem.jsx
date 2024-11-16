@@ -5,7 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import Title from "../components/Title";
 import { assets } from "../assets/assets";
-import "react-toastify/dist/ReactToastify.css"; 
+import "react-toastify/dist/ReactToastify.css";
 import { formatPrice, unformatPrice } from "../utils/formatPrice";
 
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -31,7 +31,7 @@ const AddItem = () => {
     description: "",
     price: 0,
     category: "Men",
-    subCategory: "Topwear",
+    subCategory: "Jackets",
     sizes: [],
     bestseller: false,
   });
@@ -89,7 +89,7 @@ const AddItem = () => {
     const file = event.target.files[0];
     if (file) {
       try {
-        const resizedBlob = await resizeImage(file, 500, 550); 
+        const resizedBlob = await resizeImage(file, 500, 550);
         const resizedFile = new File([resizedBlob], file.name, {
           type: file.type,
         });
@@ -149,9 +149,9 @@ const AddItem = () => {
 
     if (name === "price") {
       if (value === "") {
-        formattedValue = ""; 
+        formattedValue = "";
       } else {
-        formattedValue = formatPrice(value.replace(/^0+/, "")); 
+        formattedValue = formatPrice(value.replace(/^0+/, ""));
       }
     }
 
@@ -172,7 +172,7 @@ const AddItem = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true); 
+    setIsLoading(true);
 
     try {
       const imagePromises = images
@@ -182,7 +182,7 @@ const AddItem = () => {
 
       await axios.post("http://localhost:5173/api/products/add", {
         ...formData,
-        price: unformatPrice(formData.price), 
+        price: unformatPrice(formData.price),
         image: imageUrls,
       });
 
@@ -193,8 +193,8 @@ const AddItem = () => {
       });
 
       setTimeout(() => {
-        setIsLoading(false); 
-        navigate("/admin/list"); 
+        setIsLoading(false);
+        navigate("/admin/list");
       }, 1500);
     } catch (error) {
       console.error("Error adding product:", error);
@@ -202,19 +202,19 @@ const AddItem = () => {
         position: "top-right",
         className: "custom-toast",
       });
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   };
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const [isFormValid, setIsFormValid] = useState(false); 
+  const [isFormValid, setIsFormValid] = useState(false);
 
   useEffect(() => {
     const checkFormValidity = () => {
       const { name, description, price, category, subCategory, sizes } =
         formData;
-      const numericPrice = unformatPrice(price); 
+      const numericPrice = unformatPrice(price);
 
       return (
         name.trim() !== "" &&
@@ -229,6 +229,17 @@ const AddItem = () => {
 
     setIsFormValid(checkFormValidity());
   }, [formData, images]);
+
+  const subCategoriesList = [
+    "Jackets",
+    "Hoodies",
+    "Sweaters",
+    "Dresses",
+    "Long Sleeve Shirts",
+    "T-Shirts",
+    "Pants",
+    "Skirts",
+  ];
 
   return (
     <div>
@@ -267,7 +278,7 @@ const AddItem = () => {
                             <img
                               src={url}
                               alt={`Preview ${index + 1}`}
-                              className="object-cover w-full h-full" 
+                              className="object-cover w-full h-full"
                             />
                             <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
                               <button
@@ -430,9 +441,11 @@ const AddItem = () => {
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
               required
             >
-              <option>Topwear</option>
-              <option>Bottomwear</option>
-              <option>Footwear</option>
+              {subCategoriesList.map((subCategory) => (
+                <option key={subCategory} value={subCategory}>
+                  {subCategory}
+                </option>
+              ))}
             </select>
           </div>
           <div>
