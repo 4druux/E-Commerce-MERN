@@ -4,15 +4,13 @@ import CartTotal from "../components/CartTotal";
 import { ShopContext } from "../context/ShopContext";
 import { useLocation } from "react-router-dom";
 import { assets } from "../assets/assets";
-import axios from "axios";
 import { toast } from "react-toastify";
 
 const CheckOut = () => {
   const [method, setMethod] = useState("cod");
-  const { navigate } = useContext(ShopContext);
+  const { navigate, fetchProductsById } = useContext(ShopContext); 
   const location = useLocation();
-  const [isLoading, setIsLoading] = useState(false); // State untuk loading
-
+  const [isLoading, setIsLoading] = useState(false);
   const { selectedItems = [], delivery_fee = 0 } = location.state || {};
 
   useEffect(() => {
@@ -51,7 +49,7 @@ const CheckOut = () => {
       return;
     }
 
-    setIsLoading(true); // Mulai loading
+    setIsLoading(true); 
 
     const firstName = document.querySelector(
       'input[placeholder="First Name"]'
@@ -73,10 +71,8 @@ const CheckOut = () => {
     ).value;
     const phone = document.querySelector('input[placeholder="Phone "]').value;
 
-    // Regex untuk validasi email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    // Validasi untuk memastikan semua field diisi dan email memiliki format yang benar
     if (
       !firstName ||
       !lastName ||
@@ -93,7 +89,7 @@ const CheckOut = () => {
         position: "top-right",
         className: "custom-toast",
       });
-      setIsLoading(false); // Hentikan loading jika error
+      setIsLoading(false);
       return;
     } else if (!emailRegex.test(email)) {
       toast.error("email is not valid ", {
@@ -121,18 +117,15 @@ const CheckOut = () => {
       })
     );
 
-    // Refetch data untuk memastikan `imageUrl` dan `name` benar-benar tersedia
+    // Refetch data menggunakan fetchProductDetails dari ShopContext
     const itemsWithDetails = await Promise.all(
       selectedItems.map(async (item) => {
         if (!item.imageUrl || !item.name) {
-          const productResponse = await axios.get(
-            `https://ecommerce-backend-ebon-six.vercel.app/api/products/${item._id}`
-          );
-          const product = productResponse.data;
-          item.imageUrl = product.image
+          const product = await fetchProductsById(item._id);
+          item.imageUrl = product?.image
             ? product.image[0]
             : "/placeholder-image.png";
-          item.name = product.name;
+          item.name = product?.name || "Unknown Product";
         }
         return item;
       })

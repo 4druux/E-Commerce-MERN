@@ -5,7 +5,7 @@ import { ShopContext } from "../context/ShopContext";
 
 const Navbar = () => {
   const [visible, setVisible] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false); // State untuk deteksi scroll
+  const [isScrolled, setIsScrolled] = useState(false); 
   const { setShowSearch, getCartCount, isLoggedIn, logoutUser } =
     useContext(ShopContext);
   const [loginStatus, setLoginStatus] = useState(isLoggedIn);
@@ -25,7 +25,6 @@ const Navbar = () => {
     setIsDropdownOpen(false);
   };
 
-  // Effect untuk mendeteksi scroll
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 50) {
@@ -48,8 +47,8 @@ const Navbar = () => {
         setIsDropdownOpen(false);
       }
       if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-        setVisible(false); // Tutup sidebar jika klik di luar
-        document.body.classList.remove("overflow-hidden"); // Hapus class overflow-hidden ketika sidebar ditutup
+        setVisible(false); 
+        document.body.classList.remove("overflow-hidden"); 
       }
     };
 
@@ -73,7 +72,6 @@ const Navbar = () => {
 
   const isCollectionPage = location.pathname === "/collection";
 
-   // Effect untuk scroll ke atas ketika halaman berubah
    useEffect(() => {
     window.scrollTo(0, 0);
   }, [location]);
@@ -99,9 +97,7 @@ const Navbar = () => {
         }`}
         style={{ zIndex: 49 }}
       >
-        {/* Background full width */}
         <div className="bg-white w-full">
-          {/* Wrapper to align content with the main content */}
           <div className="max-w-[100%] md:max-w-[85%] lg:max-w-[85%] xl:max-w-[82%] 2xl:max-w-[81%] mx-auto px-4 flex items-center justify-between py-5 font-medium relative">
             <Link to="/">
               <img src={assets.atlas_icon} className="w-9" alt="Logo" />
@@ -312,10 +308,8 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Konten utama di bawah navbar */}
       <div className="pt-24">
         {/* Konten utama mulai di sini */}
-        {/* Tambahkan konten utama halaman di sini */}
       </div>
     </>
   );

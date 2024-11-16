@@ -2,7 +2,7 @@ import React, { useContext } from "react";
 import PropTypes from "prop-types";
 import { ShopContext } from "../context/ShopContext";
 import Title from "./Title";
-import { formatPrice } from "../utils/formatPrice"; // Impor formatPrice
+import { formatPrice } from "../utils/formatPrice"; 
 
 const CartTotal = ({ selectedItems = [] }) => {
   const { currency, delivery_fee } = useContext(ShopContext);
@@ -23,19 +23,19 @@ const CartTotal = ({ selectedItems = [] }) => {
       <div className="flex flex-col gap-2 mt-2 text-sm">
         <div className="flex justify-between">
           <p>Subtotal</p>
-          <p>{currency}{formatPrice(subtotal)}</p> {/* Ganti dengan formatPrice */}
+          <p>{currency}{formatPrice(subtotal)}</p> 
         </div>
         <hr />
         <div className="flex justify-between">
           <p>Shipping fee</p>
           <p>
             {subtotal > 0 ? `${currency}${formatPrice(delivery_fee)}` : `${currency}${formatPrice(0)}`}
-          </p> {/* Ganti dengan formatPrice */}
+          </p> 
         </div>
         <hr />
         <div className="flex justify-between">
           <b>Total</b>
-          <b>{currency}{formatPrice(total)}</b> {/* Ganti dengan formatPrice */}
+          <b>{currency}{formatPrice(total)}</b> 
         </div>
       </div>
     </div>

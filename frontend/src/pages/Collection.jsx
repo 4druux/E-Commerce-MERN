@@ -1,108 +1,76 @@
-import React, { useContext, useEffect, useState, useCallback } from "react";
-import axios from "axios";
+import React, { useContext, useEffect, useState, useMemo } from "react";
 import { ShopContext } from "../context/ShopContext";
 import { assets } from "../assets/assets";
 import Title from "../components/Title";
 import ProductItem from "../components/ProductItem";
+import SkeletonCard from "../components/SkeletonCard";
 
 const Collection = () => {
-  const { search, showSearch } = useContext(ShopContext);
-  const [products, setProducts] = useState([]);
-  const [filterProducts, setFilterProducts] = useState([]);
+  const { search, showSearch, products } = useContext(ShopContext);
   const [category, setCategory] = useState([]);
   const [subCategory, setSubCategory] = useState([]);
   const [sortType, setSortType] = useState("relavent");
   const [showFilter, setShowFilter] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // State untuk loading
-
-  // Fetch products from backend
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await axios.get(
-          "https://ecommerce-backend-ebon-six.vercel.app/api/products/all"
-        );
-        setProducts(response.data);
-        setIsLoading(false); // Matikan loading setelah data berhasil diterima
-      } catch (error) {
-        console.error("Failed to fetch products", error);
-        setIsLoading(false); // Matikan loading jika terjadi error
-      }
-    };
-
-    fetchProducts();
-  }, []);
+  const [loading, setLoading] = useState(true);
 
   const toggleCategory = (e) => {
-    if (category.includes(e.target.value)) {
-      setCategory((prev) => prev.filter((item) => item !== e.target.value));
-    } else {
-      setCategory((prev) => [...prev, e.target.value]);
-    }
+    setCategory((prev) =>
+      prev.includes(e.target.value)
+        ? prev.filter((item) => item !== e.target.value)
+        : [...prev, e.target.value]
+    );
   };
 
   const toggleSubCategory = (e) => {
-    if (subCategory.includes(e.target.value)) {
-      setSubCategory((prev) => prev.filter((item) => item !== e.target.value));
-    } else {
-      setSubCategory((prev) => [...prev, e.target.value]);
-    }
+    setSubCategory((prev) =>
+      prev.includes(e.target.value)
+        ? prev.filter((item) => item !== e.target.value)
+        : [...prev, e.target.value]
+    );
   };
 
-  const applyFilter = useCallback(() => {
-    let productsCopy = products.slice();
+  const filteredAndSortedProducts = useMemo(() => {
+    let filteredProducts = products.slice();
 
+    // Filter by search term
     if (showSearch && search) {
-      productsCopy = productsCopy.filter((item) =>
+      filteredProducts = filteredProducts.filter((item) =>
         item.name.toLowerCase().includes(search.toLowerCase())
       );
     }
 
+    // Filter by category
     if (category.length > 0) {
-      productsCopy = productsCopy.filter((item) =>
+      filteredProducts = filteredProducts.filter((item) =>
         category.includes(item.category)
       );
     }
 
+    // Filter by sub-category
     if (subCategory.length > 0) {
-      productsCopy = productsCopy.filter((item) =>
+      filteredProducts = filteredProducts.filter((item) =>
         subCategory.includes(item.subCategory)
       );
     }
 
-    return productsCopy;
-  }, [products, search, showSearch, category, subCategory]);
-
-  const sortProduct = useCallback(
-    (filteredProducts) => {
-      let sortedProducts = [...filteredProducts];
-
-      switch (sortType) {
-        case "low-high":
-          return sortedProducts.sort((a, b) => a.price - b.price);
-        case "high-low":
-          return sortedProducts.sort((a, b) => b.price - a.price);
-        default:
-          return sortedProducts;
-      }
-    },
-    [sortType]
-  );
+    // Sorting the filtered products
+    switch (sortType) {
+      case "low-high":
+        return filteredProducts.sort((a, b) => a.price - b.price);
+      case "high-low":
+        return filteredProducts.sort((a, b) => b.price - a.price);
+      default:
+        return filteredProducts;
+    }
+  }, [products, search, showSearch, category, subCategory, sortType]);
 
   useEffect(() => {
-    const filtered = applyFilter();
-    const sorted = sortProduct(filtered);
-    setFilterProducts(sorted);
-  }, [applyFilter, sortProduct]);
+    setLoading(true);
 
-  // Render loading spinner while fetching data
-  if (isLoading) {
-    return (
-      <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50">
-        <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
-      </div>
-    );
-  }
+    if (filteredAndSortedProducts.length > 0) {
+      setLoading(false);
+    }
+  }, [filteredAndSortedProducts]);
 
   return (
     <div className="flex flex-col sm:flex-row gap-1 sm:gap-10 pt-10 border-t">
@@ -119,6 +87,7 @@ const Collection = () => {
             alt=""
           />
         </p>
+
         {/* Category Filter */}
         <div
           className={`border border-gray-300 pl-5 py-3 mt-6 ${
@@ -133,7 +102,7 @@ const Collection = () => {
                 type="checkbox"
                 value={"Men"}
                 onChange={toggleCategory}
-              />{" "}
+              />
               Men
             </p>
             <p className="flex gap-2">
@@ -142,7 +111,7 @@ const Collection = () => {
                 type="checkbox"
                 value={"Women"}
                 onChange={toggleCategory}
-              />{" "}
+              />
               Women
             </p>
             <p className="flex gap-2">
@@ -151,7 +120,7 @@ const Collection = () => {
                 type="checkbox"
                 value={"Kids"}
                 onChange={toggleCategory}
-              />{" "}
+              />
               Kids
             </p>
           </div>
@@ -200,6 +169,7 @@ const Collection = () => {
       <div className="flex-1">
         <div className="flex justify-between text-base sm:text-2xl mb-4">
           <Title text1={"ALL"} text2={"COLLECTIONS"} />
+
           {/* Product Sort */}
           <select
             onChange={(e) => setSortType(e.target.value)}
@@ -211,8 +181,7 @@ const Collection = () => {
           </select>
         </div>
 
-        {/* Conditional Rendering: Show message if search does not find any results */}
-        {showSearch && search && filterProducts.length === 0 ? (
+        {showSearch && search && filteredAndSortedProducts.length === 0 ? (
           <div className="flex flex-col items-center justify-center mt-10 h-96">
             <div className="flex items-center">
               <img
@@ -220,20 +189,24 @@ const Collection = () => {
                 alt="Search Icon"
                 className="w-6 h-6 mr-2"
               />
-              <p className="text-lg text-gray-600">Pencarian tidak ditemukan</p>
+              <p className="text-lg text-gray-600">No results found</p>
             </div>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 gap-y-6">
-            {filterProducts.map((item, index) => (
-              <ProductItem
-                key={index}
-                id={item._id}
-                image={item.image[0]} // Menggunakan gambar pertama
-                name={item.name}
-                price={item.price}
-              />
-            ))}
+            {loading
+              ? Array.from({ length: 12 }).map((_, index) => (
+                  <SkeletonCard key={index} />
+                ))
+              : filteredAndSortedProducts.map((item, index) => (
+                  <ProductItem
+                    key={index}
+                    id={item._id}
+                    image={item.image[0]}
+                    name={item.name}
+                    price={item.price}
+                  />
+                ))}
           </div>
         )}
       </div>

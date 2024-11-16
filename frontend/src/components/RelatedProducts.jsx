@@ -4,8 +4,7 @@ import Title from "./Title";
 import ProductItem from "./ProductItem";
 import PropTypes from "prop-types";
 
-
-const RelatedProducts = ({ category, subCategory }) => {
+const RelatedProducts = ({ category, subCategory, onProductClick }) => {
   const { products } = useContext(ShopContext);
   const [related, setRelated] = useState([]);
 
@@ -21,6 +20,7 @@ const RelatedProducts = ({ category, subCategory }) => {
       setRelated(productsCopy.slice(0, 5));
     }
   }, [products, category, subCategory]);
+
   return (
     <div className="my-24">
       <div className="text-center text-3xl py-2">
@@ -35,6 +35,7 @@ const RelatedProducts = ({ category, subCategory }) => {
             name={item.name}
             price={item.price}
             image={item.image}
+            onClick={() => onProductClick(item._id)}
           />
         ))}
       </div>
@@ -45,6 +46,7 @@ const RelatedProducts = ({ category, subCategory }) => {
 RelatedProducts.propTypes = {
   category: PropTypes.string.isRequired,
   subCategory: PropTypes.string.isRequired,
+  onProductClick: PropTypes.func.isRequired,
 };
 
 export default RelatedProducts;

@@ -5,10 +5,9 @@ import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import Title from "../components/Title";
 import { assets } from "../assets/assets";
-import "react-toastify/dist/ReactToastify.css"; // Pastikan ini diimpor jika belum
+import "react-toastify/dist/ReactToastify.css"; 
 import { formatPrice, unformatPrice } from "../utils/formatPrice";
 
-// Import Swiper components
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination } from "swiper/modules";
 import "swiper/css";
@@ -37,7 +36,6 @@ const AddItem = () => {
     bestseller: false,
   });
 
-  // Fungsi untuk mengubah ukuran gambar
   const resizeImage = (file, maxWidth, maxHeight) => {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -91,7 +89,7 @@ const AddItem = () => {
     const file = event.target.files[0];
     if (file) {
       try {
-        const resizedBlob = await resizeImage(file, 500, 550); // Ubah ukuran gambar menjadi 500x500
+        const resizedBlob = await resizeImage(file, 500, 550); 
         const resizedFile = new File([resizedBlob], file.name, {
           type: file.type,
         });
@@ -151,9 +149,9 @@ const AddItem = () => {
 
     if (name === "price") {
       if (value === "") {
-        formattedValue = ""; // Kosongkan input jika tidak ada angka
+        formattedValue = ""; 
       } else {
-        formattedValue = formatPrice(value.replace(/^0+/, "")); // Hilangkan awalan nol dan format harga
+        formattedValue = formatPrice(value.replace(/^0+/, "")); 
       }
     }
 
@@ -174,7 +172,7 @@ const AddItem = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true); // Mulai loading
+    setIsLoading(true); 
 
     try {
       const imagePromises = images
@@ -182,9 +180,9 @@ const AddItem = () => {
         .map((image) => convertToBase64(image));
       const imageUrls = await Promise.all(imagePromises);
 
-      await axios.post("https://ecommerce-backend-ebon-six.vercel.app/api/products/add", {
+      await axios.post("http://localhost:5173/api/products/add", {
         ...formData,
-        price: unformatPrice(formData.price), // Menghapus tanda titik sebelum menyimpan ke database
+        price: unformatPrice(formData.price), 
         image: imageUrls,
       });
 
@@ -195,8 +193,8 @@ const AddItem = () => {
       });
 
       setTimeout(() => {
-        setIsLoading(false); // Stop loading
-        navigate("/admin/list"); // Navigate after loading stops
+        setIsLoading(false); 
+        navigate("/admin/list"); 
       }, 1500);
     } catch (error) {
       console.error("Error adding product:", error);
@@ -204,23 +202,24 @@ const AddItem = () => {
         position: "top-right",
         className: "custom-toast",
       });
-      setIsLoading(false); // Stop loading in case of an error
+      setIsLoading(false); 
     }
   };
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const [isFormValid, setIsFormValid] = useState(false); // State untuk validasi form
+  const [isFormValid, setIsFormValid] = useState(false); 
 
   useEffect(() => {
-    // Memeriksa apakah semua field kecuali bestseller sudah diisi
     const checkFormValidity = () => {
       const { name, description, price, category, subCategory, sizes } =
         formData;
+      const numericPrice = unformatPrice(price); 
+
       return (
         name.trim() !== "" &&
         description.trim() !== "" &&
-        price > 0 &&
+        numericPrice > 0 &&
         category.trim() !== "" &&
         subCategory.trim() !== "" &&
         sizes.length > 0 &&
@@ -268,7 +267,7 @@ const AddItem = () => {
                             <img
                               src={url}
                               alt={`Preview ${index + 1}`}
-                              className="object-cover w-full h-full" // Menggunakan object-cover agar gambar memenuhi kontainer
+                              className="object-cover w-full h-full" 
                             />
                             <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
                               <button
