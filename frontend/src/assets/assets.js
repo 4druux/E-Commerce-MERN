@@ -90,6 +90,7 @@ import mandiri_icon from "./mandiri.png";
 import indomart_icon from "./indomart.png";
 import alfamart_icon from "./alfamart.png";
 import dashboard_icon from "./statisctics.png";
+import inform_icon from "./i.png";
 
 export const assets = {
   logo,
@@ -128,6 +129,7 @@ export const assets = {
   indomart_icon,
   alfamart_icon,
   dashboard_icon,
+  inform_icon,
 };
 
 export const products = [
