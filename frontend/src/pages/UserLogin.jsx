@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import SweetAlert from "../components/SweetAlert";
 import { ShopContext } from "../context/ShopContext";
+import { assets } from "../assets/assets";
 
 const UserLogin = () => {
   const [currentState, setCurrentState] = useState("Login");
@@ -270,7 +271,14 @@ const UserLogin = () => {
           >
             at least 5 characters
             <div className="relative group cursor-pointer">
-              <span className="text-gray-500 text-lg">ℹ️</span>
+              <span className="sm:text-xs">
+                <img
+                  src={assets.inform_icon}
+                  alt=""
+                  className="sm:w-6 sm:h-6 w-4 h-4"
+                />
+              </span>
+
               <div className="absolute left-1/2 -translate-x-1/2 -top-8 w-56 p-2 text-xs z-10 text-white bg-gray-800 rounded shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200">
                 Tips for a good password:
                 <ul className="list-disc list-inside mt-1">
@@ -283,9 +291,9 @@ const UserLogin = () => {
 
           {/* Progress Bar Container */}
           <div className="flex-1 flex">
-            <div className="w-full h-3 rounded border border-gray-200 bg-white relative overflow-hidden">
+            <div className="w-full h-3 rounded-full border border-gray-200 bg-white relative overflow-hidden">
               <div
-                className="h-full rounded transition-all duration-300"
+                className="h-full rounded-full transition-all duration-300"
                 style={{
                   background:
                     progressWidth[2] === 3
@@ -310,37 +318,19 @@ const UserLogin = () => {
         </div>
       )}
 
-      <div
-        className={`w-full ${
-          currentState === "Login" ? "flex justify-between" : "text-center"
-        } text-sm sm:text-xs`}
-      >
-        {currentState === "Login" ? (
-          <>
-            <p className="text-blue-500 cursor-pointer">
-              Forgot your password?
-            </p>
-            <p>
-              <span
-                onClick={toggleStateHandler}
-                className="text-blue-500 cursor-pointer"
-              >
-                Create account
-              </span>
-            </p>
-          </>
-        ) : (
+      {currentState === "Login" && (
+        <div className="w-full flex justify-between text-sm sm:text-xs">
+          <p className="text-blue-500 cursor-pointer">Forgot your password?</p>
           <p>
-            <span className="text-black">Already have an account?</span>
             <span
               onClick={toggleStateHandler}
               className="text-blue-500 cursor-pointer"
             >
-              {" Login Here"}
+              Create account
             </span>
           </p>
-        )}
-      </div>
+        </div>
+      )}
 
       <button
         type="submit"
@@ -368,6 +358,20 @@ const UserLogin = () => {
       >
         {currentState === "Login" ? "Sign In" : "Sign Up"}
       </button>
+
+      {currentState === "Sign Up" && (
+        <div className="mt-4 text-center text-sm sm:text-xs">
+          <p>
+            <span className="text-black">Already have an account?</span>
+            <span
+              onClick={toggleStateHandler}
+              className="text-blue-500 cursor-pointer"
+            >
+              {" Login Here"}
+            </span>
+          </p>
+        </div>
+      )}
     </form>
   );
 };
