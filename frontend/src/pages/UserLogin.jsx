@@ -69,8 +69,7 @@ const UserLogin = () => {
       }
 
       // Password validation
-      validatePasswordStrength(password);
-      if (progressWidth[2] !== 100) {
+      if (!isPasswordStrong) {
         setErrorMessage(
           "Password is too weak. It should include uppercase letters, numbers, and special characters."
         );
