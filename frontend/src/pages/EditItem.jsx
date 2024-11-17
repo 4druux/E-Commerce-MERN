@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ShopContext } from "../context/ShopContext";
-import SkeletonEditItem from "../components/SkeletonEditItem"; 
+import SkeletonEditItem from "../components/SkeletonEditItem";
 import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css"; 
+import "react-toastify/dist/ReactToastify.css";
 import Title from "../components/Title";
 import { assets } from "../assets/assets";
 import { formatPrice } from "../utils/formatPrice";
@@ -158,7 +158,7 @@ const EditItem = () => {
     const file = event.target.files[0];
     if (file) {
       try {
-        const resizedBlob = await resizeImage(file, 500, 550); 
+        const resizedBlob = await resizeImage(file, 500, 550);
         const resizedFile = new File([resizedBlob], file.name, {
           type: file.type,
         });
@@ -172,7 +172,7 @@ const EditItem = () => {
           urls[index] = reader.result;
           setImages(files);
           setImageURLs(urls);
-          setIsChanged(true); 
+          setIsChanged(true);
         };
         reader.readAsDataURL(resizedFile);
       } catch (error) {
@@ -207,7 +207,7 @@ const EditItem = () => {
         !isChanged &&
         newSizes.sort().join() !== originalData.sizes.sort().join()
       ) {
-        setIsChanged(true); 
+        setIsChanged(true);
       }
 
       return {
@@ -224,9 +224,9 @@ const EditItem = () => {
 
     if (name === "price") {
       if (value === "") {
-        formattedValue = ""; 
+        formattedValue = "";
       } else {
-        formattedValue = formatPrice(value.replace(/^0+/, "")); 
+        formattedValue = formatPrice(value.replace(/^0+/, ""));
       }
     }
 
@@ -246,20 +246,31 @@ const EditItem = () => {
     if (images.length < 5) {
       setImages([...images, null]);
       setImageURLs([...imageURLs, null]);
-      setIsChanged(true); 
+      setIsChanged(true);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSaving(true); 
+    setIsSaving(true);
 
     const success = await updateProduct(id, formData, imageURLs, navigate);
-    setIsSaving(false); 
+    setIsSaving(false);
     if (!success) {
       toast.error("Failed to save product changes.");
     }
   };
+
+  const subCategoriesList = [
+    "Jackets",
+    "Hoodies",
+    "Sweaters",
+    "Dresses",
+    "Long Sleeve Shirts",
+    "T-Shirts",
+    "Pants",
+    "Skirts",
+  ];
 
   if (isLoading) {
     return <SkeletonEditItem />;
@@ -466,9 +477,11 @@ const EditItem = () => {
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
               required
             >
-              <option>Topwear</option>
-              <option>Bottomwear</option>
-              <option>Footwear</option>
+              {subCategoriesList.map((subCategory) => (
+                <option key={subCategory} value={subCategory}>
+                  {subCategory}
+                </option>
+              ))}
             </select>
           </div>
           <div>
@@ -527,7 +540,7 @@ const EditItem = () => {
           <button
             className="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600"
             type="button"
-            onClick={() => navigate(-1)} 
+            onClick={() => navigate(-1)}
           >
             Cancel
           </button>
@@ -536,7 +549,7 @@ const EditItem = () => {
               !isChanged ? "bg-gray-300 cursor-not-allowed" : ""
             }`}
             type="submit"
-            disabled={!isChanged} 
+            disabled={!isChanged}
           >
             Save
           </button>

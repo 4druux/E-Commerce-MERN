@@ -1,15 +1,12 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useContext } from "react";
 import { ShopContext } from "../context/ShopContext";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import { formatPrice } from "../utils/formatPrice";
 import { assets } from "../assets/assets";
 
-const ProductItem = ({ id, image, name, price }) => {
-  const { currency, fetchProductsById } = useContext(ShopContext);
-  const [averageRating, setAverageRating] = useState(0);
-  const [reviewCount, setReviewCount] = useState(0);
-
+const ProductItem = ({ id, image, name, price, reviews }) => {
+  const { currency } = useContext(ShopContext);
   const images = Array.isArray(image) ? image : [image];
 
   const calculateAverageRating = (reviews) => {
@@ -18,16 +15,8 @@ const ProductItem = ({ id, image, name, price }) => {
     return totalRating / reviews.length;
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const product = await fetchProductsById(id);
-      if (product) {
-        setAverageRating(calculateAverageRating(product.reviews));
-        setReviewCount(product.reviews.length);
-      }
-    };
-    fetchData();
-  }, [id, fetchProductsById]);
+  const averageRating = calculateAverageRating(reviews);
+  const reviewCount = reviews.length;
 
   // Fungsi untuk render bintang rating
   const renderSingleStarWithRating = (rating, reviewCount) => {
@@ -58,7 +47,18 @@ const ProductItem = ({ id, image, name, price }) => {
           />
         </div>
         <div className="p-4">
-          <p className="text-base  text-gray-900">{name}</p>
+          <p
+            className="text-base text-gray-900 line-clamp-2 overflow-hidden"
+            style={{
+              display: "-webkit-box",
+              WebkitBoxOrient: "vertical",
+              WebkitLineClamp: 2,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {name}
+          </p>{" "}
           <div className="mt-2 inline-block border bg-orange-50 rounded px-1 py-0.5 align-middle">
             {renderSingleStarWithRating(averageRating, reviewCount)}
           </div>
@@ -80,6 +80,11 @@ ProductItem.propTypes = {
   ]).isRequired,
   name: PropTypes.string.isRequired,
   price: PropTypes.number.isRequired,
+  reviews: PropTypes.arrayOf(
+    PropTypes.shape({
+      rating: PropTypes.number.isRequired,
+    })
+  ).isRequired,
 };
 
 export default ProductItem;
