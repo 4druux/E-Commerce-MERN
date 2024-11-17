@@ -1,45 +1,45 @@
 import React, { useState } from "react";
-import axios from "axios"; 
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(""); 
-  
+  const [errorMessage, setErrorMessage] = useState("");
+
   const navigate = useNavigate();
 
   const onSubmitHandler = async (event) => {
     event.preventDefault();
-    setErrorMessage(""); 
+    setErrorMessage("");
     try {
       const response = await axios.post(
-        "http://localhost:5173/api/user/login",
+        "https://ecommerce-backend-ebon-six.vercel.app/api/user/login",
         {
           email,
           password,
         }
       );
 
-      const { token, role, expiresIn } = response.data; 
-      const expirationTime = new Date().getTime() + expiresIn * 1000; 
+      const { token, role, expiresIn } = response.data;
+      const expirationTime = new Date().getTime() + expiresIn * 1000;
 
       // Simpan token dan role ke localStorage
       localStorage.setItem("authToken", token);
-      localStorage.setItem("userRole", role); 
-      localStorage.setItem("tokenExpiration", expirationTime); 
+      localStorage.setItem("userRole", role);
+      localStorage.setItem("tokenExpiration", expirationTime);
 
       if (role === "admin") {
-        navigate("/admin/dashboard"); 
+        navigate("/admin/dashboard");
       } else {
-        setErrorMessage("You do not have admin privileges."); 
+        setErrorMessage("You do not have admin privileges.");
       }
     } catch (error) {
       if (error.response && error.response.status === 401) {
-        setErrorMessage("Invalid email or password."); 
+        setErrorMessage("Invalid email or password.");
       } else {
-        setErrorMessage("Login failed. Please try again."); 
+        setErrorMessage("Login failed. Please try again.");
       }
     }
   };
@@ -109,7 +109,7 @@ const AdminLogin = () => {
 
         <button
           type="submit"
-          disabled={!email || !password} 
+          disabled={!email || !password}
           className={`px-8 py-2 mt-4 font-normal text-white rounded-3xl transition-all duration-300 transform 
     ${
       !email || !password
