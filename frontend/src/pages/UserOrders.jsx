@@ -422,14 +422,17 @@ const UserOrders = () => {
               key={index}
               className="py-4 my-5 border-t border-b text-gray-700 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
             >
-              <div className="flex items-start gap-4 text-sm">
+              <div className="flex items-start gap-4 text-sm flex-1 min-w-0">
                 <img
-                  className="w-16 sm:w-20"
+                  className="w-16 sm:w-20 flex-shrink-0"
                   src={order.items[0]?.imageUrl || "/placeholder-image.png"}
                   alt={order.items[0]?.name || "No Product Image"}
                 />
-                <div>
-                  <p className="font-medium text-base sm:text-base">
+                <div className="min-w-0">
+                  <p
+                    className="font-medium text-base sm:text-base truncate"
+                    title={order.items[0]?.name || "No Product Name"}
+                  >
                     {order.items[0]?.name || "No Product Name"}
                   </p>
                   <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-gray-600">

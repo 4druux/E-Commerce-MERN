@@ -206,6 +206,7 @@ const Collection = () => {
                     image={item.image[0]}
                     name={item.name}
                     price={item.price}
+                    reviews={item.reviews}
                   />
                 ))}
           </div>

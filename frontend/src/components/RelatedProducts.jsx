@@ -35,6 +35,7 @@ const RelatedProducts = ({ category, subCategory, onProductClick }) => {
             name={item.name}
             price={item.price}
             image={item.image}
+            reviews={item.reviews}
             onClick={() => onProductClick(item._id)}
           />
         ))}
