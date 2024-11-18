@@ -160,7 +160,7 @@ const ShopContextProvider = (props) => {
   };
 
   // Product.jsx
-  const addToCart = async (itemId, size, price, name) => {
+  const addToCart = async (itemId, size, price, name, quantity = 1) => {
     if (!isLoggedIn) {
       navigate("/login");
       return;
@@ -169,34 +169,58 @@ const ShopContextProvider = (props) => {
     try {
       const token = localStorage.getItem("authToken");
 
-      const productResponse = await axios.get(
-        `http://localhost:5173/api/products/${itemId}`
-      );
-      const product = productResponse.data;
+      const cartResponse = await axios.get("http://localhost:5173/api/cart", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const cartItems = cartResponse.data.items;
 
-      const imageUrl =
-        product.image && product.image.length > 0
-          ? product.image[0]
-          : "/placeholder-image.png";
-
-      const dataToSend = {
-        productId: itemId,
-        size,
-        price,
-        quantity: 1,
-        name,
-        imageUrl,
-      };
-
-      // Tambahkan ke keranjang
-      const response = await axios.post(
-        "http://localhost:5173/api/cart/add",
-        dataToSend,
-        { headers: { Authorization: `Bearer ${token}` } }
+      const existingItem = cartItems.find(
+        (item) => item.productId === itemId && item.size === size
       );
 
-      // Update item keranjang di konteks
-      setCartItems(response.data.items);
+      if (existingItem) {
+        const updatedQuantity = existingItem.quantity + quantity;
+
+        const updateResponse = await axios.put(
+          "http://localhost:5173/api/cart/update",
+          {
+            productId: itemId,
+            size,
+            quantity: updatedQuantity,
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        setCartItems(updateResponse.data.items);
+      } else {
+        const productResponse = await axios.get(
+          `http://localhost:5173/api/products/${itemId}`
+        );
+        const product = productResponse.data;
+
+        const imageUrl =
+          product.image && product.image.length > 0
+            ? product.image[0]
+            : "/placeholder-image.png";
+
+        const dataToSend = {
+          productId: itemId,
+          size,
+          price,
+          quantity,
+          name,
+          imageUrl,
+        };
+
+        // Tambahkan ke keranjang
+        const response = await axios.post(
+          "http://localhost:5173/api/cart/add",
+          dataToSend,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        setCartItems(response.data.items);
+      }
     } catch (error) {
       console.error("Failed to add item to cart:", error);
       toast.error("Failed to add item to cart.");

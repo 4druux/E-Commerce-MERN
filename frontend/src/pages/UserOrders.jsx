@@ -416,15 +416,22 @@ const UserOrders = () => {
       {filteredOrders.length === 0 ? (
         <p className="text-gray-500 text-center py-16">No orders found.</p>
       ) : (
-        <div>
+        <div className="space-y-5">
           {filteredOrders.map((order, index) => (
             <div
               key={index}
-              className="py-4 my-5 border-t border-b text-gray-700 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+              className={`${
+                window.innerWidth < 768
+                  ? "bg-white shadow-md rounded-lg p-5 border hover:shadow-lg transition cursor-pointer"
+                  : "py-4 my-5 border-t border-b text-gray-700 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+              }`}
+              onClick={
+                window.innerWidth < 768 ? () => handleViewDetails(order) : null
+              }
             >
               <div className="flex items-start gap-4 text-sm flex-1 min-w-0">
                 <img
-                  className="w-16 sm:w-20 flex-shrink-0"
+                  className="w-16 sm:w-20 flex-shrink-0 rounded"
                   src={order.items[0]?.imageUrl || "/placeholder-image.png"}
                   alt={order.items[0]?.name || "No Product Image"}
                 />
@@ -459,7 +466,7 @@ const UserOrders = () => {
                 </div>
               </div>
 
-              <div className="md:w-1/2 flex justify-between items-center">
+              <div className="mt-6 md:mt-0 md:w-1/2 flex justify-between items-center">
                 <div className="flex items-center justify-center">
                   <div
                     className={`px-3 py-1 rounded-full text-sm ${
@@ -480,7 +487,10 @@ const UserOrders = () => {
 
                 {order.status === "Paid" && (
                   <button
-                    onClick={() => handleCancelOrder(order)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCancelOrder(order);
+                    }}
                     className="bg-red-500 text-white px-3 py-2 rounded-sm hover:bg-red-600 transition text-xs"
                   >
                     Cancel Order
@@ -490,13 +500,19 @@ const UserOrders = () => {
                 {order.status === "Shipped" && (
                   <div className="flex gap-2">
                     <button
-                      onClick={() => handleReturnOrder(order)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleReturnOrder(order);
+                      }}
                       className="bg-yellow-500 text-white px-3 py-2 rounded-sm hover:bg-yellow-600 transition text-xs"
                     >
                       Returned
                     </button>
                     <button
-                      onClick={() => handleMarkAsCompleted(order)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMarkAsCompleted(order);
+                      }}
                       className="bg-green-500 text-white px-3 py-2 rounded-sm hover:bg-green-600 transition text-xs"
                     >
                       Completed
@@ -504,12 +520,14 @@ const UserOrders = () => {
                   </div>
                 )}
 
-                <button
-                  onClick={() => handleViewDetails(order)}
-                  className="border px-3 py-2 text-xs font-medium rounded-sm hover:bg-gray-100 transition"
-                >
-                  View Details
-                </button>
+                {window.innerWidth >= 768 && (
+                  <button
+                    onClick={() => handleViewDetails(order)}
+                    className="border px-3 py-2 text-xs font-medium rounded-sm hover:bg-gray-100 transition"
+                  >
+                    View Details
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -541,7 +559,25 @@ const UserOrders = () => {
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Shipping Information</h3>
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-medium">Shipping Information</h3>
+                <div
+                  className={`px-3 py-1 rounded-full text-sm ${
+                    selectedOrder.status === "Pending"
+                      ? "bg-yellow-100 text-yellow-600"
+                      : ["Paid", "Shipped", "Completed", "Returned"].includes(
+                          selectedOrder.status
+                        )
+                      ? "bg-green-100 text-green-600"
+                      : selectedOrder.status === "Canceled"
+                      ? "bg-red-100 text-red-600"
+                      : "bg-gray-100 text-gray-600"
+                  }`}
+                >
+                  {selectedOrder.status}
+                </div>
+              </div>
+
               <div className="flex items-center">
                 <FaUser className="text-gray-700 mr-3" />
                 <p className="text-sm text-gray-500">
@@ -617,46 +653,51 @@ const UserOrders = () => {
                   key={index}
                   className="flex items-center justify-between py-2 border-b border-gray-200"
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-start gap-4 text-sm flex-1 min-w-0">
                     <img
-                      className="w-16 h-16 object-cover rounded"
-                      src={item.imageUrl || "/placeholder-image.png"}
-                      alt={item.name}
+                      className="w-16 sm:w-20 flex-shrink-0 object-cover rounded"
+                      src={
+                        selectedOrder.items[0]?.imageUrl ||
+                        "/placeholder-image.png"
+                      }
+                      alt={selectedOrder.items[0]?.name || "No Product Image"}
                     />
-                    <div>
-                      <p className="text-sm font-medium">{item.name}</p>
-                      <p className="text-sm text-gray-500">Size: {item.size}</p>
+                    <div className="min-w-0">
+                      <p
+                        className="font-medium text-base sm:text-base truncate"
+                        title={
+                          selectedOrder.items[0]?.name || "No Product Name"
+                        }
+                      >
+                        {selectedOrder.items[0]?.name || "No Product Name"}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-gray-600">
+                        <p className="text-sm">
+                          {currency}
+                          {formatPrice(
+                            selectedOrder.items.reduce(
+                              (total, item) =>
+                                total + item.price * item.quantity,
+                              0
+                            ) + delivery_fee
+                          )}
+                        </p>
+                        <p>x{selectedOrder.items[0]?.quantity || "N/A"}</p>
+                        <p>Size: {selectedOrder.items[0]?.size || "N/A"}</p>
+                      </div>
+                      <p className="mt-1 text-sm text-gray-500">
+                        Date:{" "}
+                        <span className="text-gray-400">
+                          {selectedOrder.orderDate
+                            ? format(
+                                new Date(selectedOrder.orderDate),
+                                "dd MMM yyyy"
+                              )
+                            : "No Date"}
+                        </span>
+                      </p>
                     </div>
                   </div>
-                  <div className="flex items-center justify-center">
-                    <div
-                      className={`px-3 py-1 rounded-full text-sm ${
-                        selectedOrder.status === "Pending"
-                          ? "bg-yellow-100 text-yellow-600"
-                          : [
-                              "Paid",
-                              "Shipped",
-                              "Completed",
-                              "Returned",
-                            ].includes(selectedOrder.status)
-                          ? "bg-green-100 text-green-600"
-                          : selectedOrder.status === "Canceled"
-                          ? "bg-red-100 text-red-600"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      {selectedOrder.status}
-                    </div>
-                  </div>
-                  <p className="text-sm">
-                    {currency}
-                    {formatPrice(
-                      selectedOrder.items.reduce(
-                        (total, item) => total + item.price * item.quantity,
-                        0
-                      ) + delivery_fee
-                    )}
-                  </p>
                 </div>
               ))}
             </div>

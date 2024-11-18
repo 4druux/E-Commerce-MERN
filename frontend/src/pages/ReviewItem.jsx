@@ -366,11 +366,11 @@ const ReviewItem = () => {
                   </div>
                 )}
                 <div className="flex flex-col space-y-4 w-full">
-                  <h1 className="font-medium text-2xl mt-2">{product.name}</h1>
+                  <h1 className="font-medium text-2xl mt-2 line-clamp-2">{product.name}</h1>
                   <div className="flex items-center gap-1 mt-2">
                     {renderSingleStarWithRating(averageRating, reviews.length)}
                   </div>
-                  <p className="text-gray-600 text-sm md:text-base">
+                  <p className="text-gray-600 text-sm md:text-base line-clamp-2">
                     {product.description}
                   </p>
                   <div className="flex flex-col space-y-2 mt-2 text-sm md:text-base">

@@ -244,8 +244,8 @@ const ListItems = () => {
 
                 <div className="flex flex-col justify-between mt-4 sm:mt-0 sm:ml-6 w-full">
                   <div>
-                    <h3 className="text-lg font-semibold">{product.name}</h3>
-                    <p className="text-gray-600 mt-2">{product.description}</p>
+                    <h3 className="text-lg font-semibold line-clamp-1">{product.name}</h3>
+                    <p className="text-gray-600 mt-2 line-clamp-1">{product.description}</p>
                     <p className="text-gray-600 mt-2">
                       <strong>Category:</strong> {product.category}
                     </p>

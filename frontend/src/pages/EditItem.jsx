@@ -16,6 +16,8 @@ import { Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
 
+import CropModal from "../components/CropModal";
+
 const EditItem = () => {
   const { fetchProductsById, updateProduct } = useContext(ShopContext);
   const { id } = useParams();
@@ -23,6 +25,9 @@ const EditItem = () => {
 
   const [images, setImages] = useState([null]);
   const [imageURLs, setImageURLs] = useState([null]);
+  const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+  const [currentCropImage, setCurrentCropImage] = useState(null);
+  const [cropIndex, setCropIndex] = useState(null);
   const [availableSizes, setAvailableSizes] = useState({
     S: false,
     M: false,
@@ -104,82 +109,56 @@ const EditItem = () => {
     }
   }, [id, fetchProductsById, hasFetched]);
 
-  // Fungsi untuk mengubah ukuran gambar
-  const resizeImage = (file, maxWidth, maxHeight) => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const reader = new FileReader();
+  useEffect(() => {
+    if (hasFetched) {
+      const textarea = document.querySelector('textarea[name="description"]');
+      if (textarea) {
+        textarea.style.height = "auto";
+        textarea.style.height = `${textarea.scrollHeight}px`;
+      }
+    }
+  }, [formData.description, hasFetched]);
 
-      reader.onload = (e) => {
-        img.src = e.target.result;
-      };
 
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
+  useEffect(() => {
+    if (isCropModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
 
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > maxWidth) {
-            height *= maxWidth / width;
-            width = maxWidth;
-          }
-        } else {
-          if (height > maxHeight) {
-            width *= maxHeight / height;
-            height = maxHeight;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        ctx.drawImage(img, 0, 0, width, height);
-
-        canvas.toBlob((blob) => {
-          if (blob) {
-            resolve(blob);
-          } else {
-            reject(new Error("Canvas toBlob failed"));
-          }
-        }, file.type);
-      };
-
-      img.onerror = () => {
-        reject(new Error("Image load error"));
-      };
-
-      reader.readAsDataURL(file);
-    });
-  };
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isCropModalOpen]);
 
   const handleImageChange = async (index, event) => {
     const file = event.target.files[0];
     if (file) {
-      try {
-        const resizedBlob = await resizeImage(file, 500, 550);
-        const resizedFile = new File([resizedBlob], file.name, {
-          type: file.type,
-        });
-
-        const files = [...images];
-        const urls = [...imageURLs];
-
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          files[index] = resizedFile;
-          urls[index] = reader.result;
-          setImages(files);
-          setImageURLs(urls);
-          setIsChanged(true);
-        };
-        reader.readAsDataURL(resizedFile);
-      } catch (error) {
-        console.error("Error resizing image", error);
-        toast.error("Error resizing image.");
-      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCurrentCropImage(reader.result);
+        setCropIndex(index);
+        setIsCropModalOpen(true);
+      };
+      reader.readAsDataURL(file);
     }
+  };
+
+  const handleCropComplete = (croppedImage) => {
+    const updatedImages = [...images];
+    updatedImages[cropIndex] = croppedImage;
+    setImages(updatedImages);
+
+    const updatedImageURLs = [...imageURLs];
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      updatedImageURLs[cropIndex] = reader.result;
+      setImageURLs(updatedImageURLs);
+    };
+    reader.readAsDataURL(croppedImage);
+
+    setIsCropModalOpen(false);
   };
 
   const handleRemoveImage = (index) => {
@@ -219,6 +198,11 @@ const EditItem = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === "description") {
+      e.target.style.height = "auto";
+      e.target.style.height = `${e.target.scrollHeight}px`;
+    }
 
     let formattedValue = value;
 
@@ -357,7 +341,6 @@ const EditItem = () => {
                           className="flex items-center justify-center w-full h-full"
                         >
                           <span className="text-5xl">+</span>{" "}
-                          {/* Pastikan ikon besar */}
                         </button>
                       </div>
                     </SwiperSlide>
@@ -445,8 +428,42 @@ const EditItem = () => {
               name="description"
               value={formData.description}
               onChange={handleInputChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && e.shiftKey) {
+                  e.preventDefault();
+                  setFormData((prevState) => ({
+                    ...prevState,
+                    description: `${prevState.description}\n`,
+                  }));
+                }
+
+                if (e.key === "Tab") {
+                  e.preventDefault(); 
+                  const { selectionStart, selectionEnd } = e.target;
+                  const value = formData.description;
+                  const newValue =
+                    value.substring(0, selectionStart) +
+                    "\t" +
+                    value.substring(selectionEnd);
+
+                  setFormData((prevState) => ({
+                    ...prevState,
+                    description: newValue,
+                  }));
+
+                  setTimeout(() => {
+                    e.target.selectionStart = e.target.selectionEnd =
+                      selectionStart + 1;
+                  }, 0);
+                }
+              }}
+              onInput={(e) => {
+                e.target.style.height = "auto";
+                e.target.style.height = `${e.target.scrollHeight}px`;
+              }}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md resize-none overflow-hidden"
               placeholder="Write content here"
+              rows="2"
               required
             ></textarea>
           </div>
@@ -560,6 +577,14 @@ const EditItem = () => {
         <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
           <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
         </div>
+      )}
+
+      {isCropModalOpen && currentCropImage && (
+        <CropModal
+          imageSrc={currentCropImage}
+          onCropComplete={handleCropComplete}
+          onClose={() => setIsCropModalOpen(false)}
+        />
       )}
     </div>
   );

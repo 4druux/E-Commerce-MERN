@@ -13,6 +13,8 @@ import { Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
 
+import CropModal from "../components/CropModal";
+
 const AddItem = () => {
   const [images, setImages] = useState([null]);
   const [imageURLs, setImageURLs] = useState([null]);
@@ -25,6 +27,9 @@ const AddItem = () => {
   });
 
   const navigate = useNavigate();
+  const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+  const [currentCropImage, setCurrentCropImage] = useState(null);
+  const [cropIndex, setCropIndex] = useState(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -36,80 +41,45 @@ const AddItem = () => {
     bestseller: false,
   });
 
-  const resizeImage = (file, maxWidth, maxHeight) => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const reader = new FileReader();
+  useEffect(() => {
+    if (isCropModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
 
-      reader.onload = (e) => {
-        img.src = e.target.result;
-      };
-
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > maxWidth) {
-            height *= maxWidth / width;
-            width = maxWidth;
-          }
-        } else {
-          if (height > maxHeight) {
-            width *= maxHeight / height;
-            height = maxHeight;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        ctx.drawImage(img, 0, 0, width, height);
-
-        canvas.toBlob((blob) => {
-          if (blob) {
-            resolve(blob);
-          } else {
-            reject(new Error("Canvas toBlob failed"));
-          }
-        }, file.type);
-      };
-
-      img.onerror = () => {
-        reject(new Error("Image load error"));
-      };
-
-      reader.readAsDataURL(file);
-    });
-  };
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isCropModalOpen]);
 
   const handleImageChange = async (index, event) => {
     const file = event.target.files[0];
     if (file) {
-      try {
-        const resizedBlob = await resizeImage(file, 500, 550);
-        const resizedFile = new File([resizedBlob], file.name, {
-          type: file.type,
-        });
-
-        const files = [...images];
-        const urls = [...imageURLs];
-
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          files[index] = resizedFile;
-          urls[index] = reader.result;
-          setImages(files);
-          setImageURLs(urls);
-        };
-        reader.readAsDataURL(resizedFile);
-      } catch (error) {
-        console.error("Error resizing image", error);
-        toast.error("Error resizing image.");
-      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCurrentCropImage(reader.result);
+        setCropIndex(index);
+        setIsCropModalOpen(true);
+      };
+      reader.readAsDataURL(file);
     }
+  };
+
+  const handleCropComplete = (croppedImage) => {
+    const updatedImages = [...images];
+    updatedImages[cropIndex] = croppedImage;
+    setImages(updatedImages);
+
+    const updatedImageURLs = [...imageURLs];
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      updatedImageURLs[cropIndex] = reader.result;
+      setImageURLs(updatedImageURLs);
+    };
+    reader.readAsDataURL(croppedImage);
+
+    setIsCropModalOpen(false);
   };
 
   const handleRemoveImage = (index) => {
@@ -145,20 +115,30 @@ const AddItem = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
-    let formattedValue = value;
+    if (
+      name === "description" &&
+      e.nativeEvent.inputType === "insertLineBreak"
+    ) {
+      setFormData((prevState) => ({
+        ...prevState,
+        [name]: `${prevState[name]}\n`,
+      }));
+    } else {
+      let formattedValue = value;
 
-    if (name === "price") {
-      if (value === "") {
-        formattedValue = "";
-      } else {
-        formattedValue = formatPrice(value.replace(/^0+/, ""));
+      if (name === "price") {
+        if (value === "") {
+          formattedValue = "";
+        } else {
+          formattedValue = formatPrice(value.replace(/^0+/, ""));
+        }
       }
-    }
 
-    setFormData((prevState) => ({
-      ...prevState,
-      [name]: formattedValue,
-    }));
+      setFormData((prevState) => ({
+        ...prevState,
+        [name]: formattedValue,
+      }));
+    }
   };
 
   const convertToBase64 = (file) => {
@@ -409,7 +389,20 @@ const AddItem = () => {
               name="description"
               value={formData.description}
               onChange={handleInputChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && e.shiftKey) {
+                  e.preventDefault();
+                  setFormData((prevState) => ({
+                    ...prevState,
+                    description: `${prevState.description}\n`,
+                  }));
+                }
+              }}
+              onInput={(e) => {
+                e.target.style.height = "auto";
+                e.target.style.height = `${e.target.scrollHeight}px`;
+              }}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md resize-none overflow-hidden"
               placeholder="Write content here"
               required
             ></textarea>
@@ -513,7 +506,7 @@ const AddItem = () => {
               isFormValid ? "bg-black" : "bg-gray-300 cursor-not-allowed"
             }`}
             type="submit"
-            disabled={!isFormValid} // Disable tombol jika form tidak valid
+            disabled={!isFormValid}
           >
             ADD
           </button>
@@ -524,6 +517,14 @@ const AddItem = () => {
         <div className="fixed inset-0 bg-black opacity-50   flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
           <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
         </div>
+      )}
+
+      {isCropModalOpen && currentCropImage && (
+        <CropModal
+          imageSrc={currentCropImage}
+          onCropComplete={handleCropComplete}
+          onClose={() => setIsCropModalOpen(false)}
+        />
       )}
     </div>
   );
