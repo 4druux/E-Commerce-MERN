@@ -6,7 +6,15 @@ import RelatedProducts from "../components/RelatedProducts";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { formatPrice } from "../utils/formatPrice";
-import SkeletonProduct from "../components/SkeletonProduct"; 
+import SkeletonProduct from "../components/SkeletonProduct";
+
+// Import Swiper components
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Pagination } from "swiper/modules";
+
+// Import Swiper styles
+import "swiper/css";
+import "swiper/css/pagination";
 
 const Product = () => {
   // Fetch Data Product
@@ -42,6 +50,7 @@ const Product = () => {
   const dateDropdownRef = useRef(null);
   const navigate = useNavigate();
   const allSizes = ["S", "M", "L", "XL", "XXL"];
+  const [quantity, setQuantity] = useState(1);
 
   const [loadingProduct, setLoadingProduct] = useState(true);
   const [loadingCart, setLoadingCart] = useState(false);
@@ -122,9 +131,9 @@ const Product = () => {
 
   useEffect(() => {
     if (isModalOpen || isReviewModalOpen) {
-      document.body.style.overflow = "hidden"; 
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = "unset"; 
+      document.body.style.overflow = "unset";
     }
 
     return () => {
@@ -172,9 +181,16 @@ const Product = () => {
       return;
     }
     setLoadingCart(true);
-    await addToCart(productData._id, size, productData.price, productData.name);
+    await addToCart(
+      productData._id,
+      size,
+      productData.price,
+      productData.name,
+      quantity
+    );
     setLoadingCart(false);
     setSize("");
+    setQuantity(1);
     toast.success("Product added to cart", {
       autoClose: 2000,
       position: "top-right",
@@ -229,7 +245,7 @@ const Product = () => {
         <span>Filter by Rating</span>
         {rating > 0 && (
           <span className="ml-2 flex items-center">
-            <span className="mr-1">(</span> 
+            <span className="mr-1">(</span>
             <img
               src={assets.star_icon}
               alt="Star"
@@ -251,7 +267,7 @@ const Product = () => {
           <span className="ml-2 flex items-center">
             <span className="mr-1">(</span>
             <span>{selectedSize}</span>
-            <span className="ml-1">)</span> 
+            <span className="ml-1">)</span>
           </span>
         )}
       </div>
@@ -263,13 +279,13 @@ const Product = () => {
     return (
       <div className="flex flex-col gap-2">
         {[...Array(5)].map((_, rowIndex) => {
-          const starCount = 5 - rowIndex; 
-          const reviewCount = countReviewsByRating(starCount); 
+          const starCount = 5 - rowIndex;
+          const reviewCount = countReviewsByRating(starCount);
 
           return (
             <button
               key={rowIndex}
-              onClick={() => handleRatingFilterChange(starCount)} 
+              onClick={() => handleRatingFilterChange(starCount)}
               className="border border-gray-300 p-2 rounded-md hover:bg-gray-100 transition focus:outline-none w-full flex items-center justify-between"
             >
               {/* Render bintang */}
@@ -279,11 +295,11 @@ const Product = () => {
                     key={starIndex}
                     src={
                       starCount === rating
-                        ? assets.star_icon 
-                        : assets.star_dull_icon 
+                        ? assets.star_icon
+                        : assets.star_dull_icon
                     }
                     alt={`${starCount} Star`}
-                    className="w-5 h-5 mx-1" 
+                    className="w-5 h-5 mx-1"
                   />
                 ))}
               </div>
@@ -429,21 +445,55 @@ const Product = () => {
                 key={index}
                 className={`w-[24%] lg:w-full md:w-full lg:mb-3 md:mb-3 flex-shrink-0 cursor-pointer rounded-sm
               ${
-                index >= 0 && index <= 3 && selectedImageIndex === index
+                selectedImageIndex === index
                   ? "border rounded-md border-black"
                   : ""
               }`}
-                alt="Product"
+                alt="Product Thumbnail"
               />
             ))}
           </div>
-          <div className="w-full lg:w-[80%] md:w-[80%]">
-            <img
-              src={image}
-              className="w-full h-auto rounded-sm cursor-pointer"
-              alt="Selected Product"
-              onClick={openModal}
-            />
+
+          {/* Gambar Utama */}
+          <div className="w-full lg:w-[80%] md:w-[80%] ">
+            {/* Untuk layar mobile (sm): Slider Swiper */}
+            <div className="sm:block lg:hidden md:hidden">
+              <Swiper
+                slidesPerView={1}
+                spaceBetween={10}
+                pagination={{
+                  clickable: true,
+                  bulletClass: "swiper-pagination-bullet bg-black",
+                  bulletActiveClass: "swiper-pagination-bullet-active bg-black",
+                }}
+                modules={[Pagination]}
+                onSlideChange={(swiper) => {
+                  setImage(productData.image[swiper.activeIndex]);
+                  setSelectedImageIndex(swiper.activeIndex);
+                }}
+                className="w-full cursor-pointer"
+              >
+                {productData.image.map((item, index) => (
+                  <SwiperSlide key={index}>
+                    <img
+                      src={item}
+                      alt={`Slide ${index + 1}`}
+                      className="w-full h-auto rounded-sm"
+                    />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            </div>
+
+            {/* Untuk layar desktop dan tablet */}
+            <div className="hidden sm:hidden lg:block md:block">
+              <img
+                src={image}
+                className="w-full h-full rounded-sm cursor-pointer object-cover"
+                alt="Selected Product"
+                onClick={openModal}
+              />
+            </div>
           </div>
 
           {/* Modal for full-screen view */}
@@ -485,7 +535,7 @@ const Product = () => {
                   <button
                     key={index}
                     onClick={() => handleSizeClick(item)}
-                    className={`border py-2 px-4 ${
+                    className={`border py-2 px-4  ${
                       isAvailable
                         ? item === size
                           ? "bg-gray-900 text-white border-black"
@@ -499,12 +549,50 @@ const Product = () => {
                 );
               })}
             </div>
+            <div className="flex flex-col gap-4 ">
+              <p>Quantity</p>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
+                  className="bg-gray-50 border border-gray-300 hover:bg-gray-200 flex items-center justify-center "
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                  }}
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  value={quantity}
+                  onChange={(e) =>
+                    setQuantity(Math.max(1, Number(e.target.value)))
+                  }
+                  className="border text-center px-1  border-gray-300 "
+                  style={{
+                    width: "60px",
+                    height: "40px",
+                  }}
+                  min="1"
+                />
+                <button
+                  onClick={() => setQuantity((prev) => prev + 1)}
+                  className="bg-gray-50 border border-gray-300 hover:bg-gray-200 flex items-center justify-center "
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                  }}
+                >
+                  +
+                </button>
+              </div>
+            </div>
           </div>
           <div className="flex gap-4 lg:gap-4 md:gap-4 lg:w-full md:w-full lg:max-w-[400px] md:max-w-[400px] lg:min-w-[300px] md:min-w-[300px]">
             <button
               className="flex-1 border border-black px-4 py-3 text-sm active:bg-gray-700 hover:bg-black hover:text-white transition-all duration-500"
               onClick={handleAddToCart}
-              disabled={loadingCart} 
+              disabled={loadingCart}
             >
               {loadingCart ? "ADDING TO CART..." : "ADD TO CART"}
             </button>
@@ -611,7 +699,7 @@ const Product = () => {
                 {isRatingDropdownOpen && (
                   <div
                     className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-10 p-2"
-                    style={{ minWidth: "200px" }} 
+                    style={{ minWidth: "200px" }}
                   >
                     <div className="flex flex-col items-start gap-2">
                       {renderModernStars(
@@ -723,7 +811,7 @@ const Product = () => {
 
         <div className="flex flex-col gap-4 border px-6 py-6 text-sm text-gray-500">
           {activeTab === "description" ? (
-            <p>{productData.description}</p>
+            <div className="whitespace-pre-line">{productData.description}</div>
           ) : filteredReviews.length > 0 ? (
             filteredReviews.map((review, index) => (
               <div key={index} className="border-b pb-4">

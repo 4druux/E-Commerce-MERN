@@ -25,12 +25,9 @@ const ShopContextProvider = (props) => {
   const fetchCartData = useCallback(
     async (token) => {
       try {
-        const response = await axios.get(
-          "https://ecommerce-backend-ebon-six.vercel.app/api/cart",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const response = await axios.get("https://ecommerce-backend-ebon-six.vercel.app/api/cart", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setCartItems(response.data.items);
       } catch (error) {
         if (error.response && error.response.status === 401) {
@@ -163,7 +160,7 @@ const ShopContextProvider = (props) => {
   };
 
   // Product.jsx
-  const addToCart = async (itemId, size, price, name) => {
+  const addToCart = async (itemId, size, price, name, quantity = 1) => {
     if (!isLoggedIn) {
       navigate("/login");
       return;
@@ -172,34 +169,58 @@ const ShopContextProvider = (props) => {
     try {
       const token = localStorage.getItem("authToken");
 
-      const productResponse = await axios.get(
-        `https://ecommerce-backend-ebon-six.vercel.app/api/products/${itemId}`
-      );
-      const product = productResponse.data;
+      const cartResponse = await axios.get("https://ecommerce-backend-ebon-six.vercel.app/api/cart", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const cartItems = cartResponse.data.items;
 
-      const imageUrl =
-        product.image && product.image.length > 0
-          ? product.image[0]
-          : "/placeholder-image.png";
-
-      const dataToSend = {
-        productId: itemId,
-        size,
-        price,
-        quantity: 1,
-        name,
-        imageUrl,
-      };
-
-      // Tambahkan ke keranjang
-      const response = await axios.post(
-        "https://ecommerce-backend-ebon-six.vercel.app/api/cart/add",
-        dataToSend,
-        { headers: { Authorization: `Bearer ${token}` } }
+      const existingItem = cartItems.find(
+        (item) => item.productId === itemId && item.size === size
       );
 
-      // Update item keranjang di konteks
-      setCartItems(response.data.items);
+      if (existingItem) {
+        const updatedQuantity = existingItem.quantity + quantity;
+
+        const updateResponse = await axios.put(
+          "https://ecommerce-backend-ebon-six.vercel.app/api/cart/update",
+          {
+            productId: itemId,
+            size,
+            quantity: updatedQuantity,
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        setCartItems(updateResponse.data.items);
+      } else {
+        const productResponse = await axios.get(
+          `https://ecommerce-backend-ebon-six.vercel.app/api/products/${itemId}`
+        );
+        const product = productResponse.data;
+
+        const imageUrl =
+          product.image && product.image.length > 0
+            ? product.image[0]
+            : "/placeholder-image.png";
+
+        const dataToSend = {
+          productId: itemId,
+          size,
+          price,
+          quantity,
+          name,
+          imageUrl,
+        };
+
+        // Tambahkan ke keranjang
+        const response = await axios.post(
+          "https://ecommerce-backend-ebon-six.vercel.app/api/cart/add",
+          dataToSend,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        setCartItems(response.data.items);
+      }
     } catch (error) {
       console.error("Failed to add item to cart:", error);
       toast.error("Failed to add item to cart.");
@@ -368,12 +389,9 @@ const ShopContextProvider = (props) => {
     try {
       const token = localStorage.getItem("authToken");
 
-      await axios.delete(
-        `https://ecommerce-backend-ebon-six.vercel.app/api/orders/${orderId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      await axios.delete(`https://ecommerce-backend-ebon-six.vercel.app/api/orders/${orderId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       // Emit event to notify about the deletion
       // socket.emit("orderDeleted", { orderId });
@@ -391,12 +409,9 @@ const ShopContextProvider = (props) => {
     try {
       const token = localStorage.getItem("authToken");
 
-      await axios.delete(
-        `https://ecommerce-backend-ebon-six.vercel.app/api/products/${productId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      await axios.delete(`https://ecommerce-backend-ebon-six.vercel.app/api/products/${productId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       setProducts((prevProducts) =>
         prevProducts.filter((product) => product._id !== productId)

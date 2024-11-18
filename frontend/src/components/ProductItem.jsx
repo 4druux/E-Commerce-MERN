@@ -47,16 +47,7 @@ const ProductItem = ({ id, image, name, price, reviews }) => {
           />
         </div>
         <div className="p-4">
-          <p
-            className="text-base text-gray-900 line-clamp-2 overflow-hidden"
-            style={{
-              display: "-webkit-box",
-              WebkitBoxOrient: "vertical",
-              WebkitLineClamp: 2,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
+          <p className="text-base text-gray-900 line-clamp-2 overflow-hidden">
             {name}
           </p>{" "}
           <div className="mt-2 inline-block border bg-orange-50 rounded px-1 py-0.5 align-middle">

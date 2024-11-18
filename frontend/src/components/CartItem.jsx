@@ -83,7 +83,7 @@ const CartItem = ({
             onClick={() =>
               handleDecrement(item.productId, item.size, item.quantity)
             }
-            className={`bg-gray-50 border ${
+            className={`bg-gray-50 border border-gray-300 hover:bg-gray-200 ${
               isMobile ? "px-1 py-0.5 text-xs" : "px-2 py-1 text-sm"
             }`}
             style={{ minWidth: isMobile ? "15px" : "32px" }}
@@ -111,7 +111,7 @@ const CartItem = ({
             onClick={() =>
               handleIncrement(item.productId, item.size, item.quantity)
             }
-            className={`bg-gray-50 border ${
+            className={`bg-gray-50 border border-gray-300 hover:bg-gray-200 ${
               isMobile ? "px-1 py-0.5 text-xs" : "px-2 py-1 text-sm"
             }`}
             style={{ minWidth: isMobile ? "15px" : "32px" }}

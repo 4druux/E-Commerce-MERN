@@ -308,11 +308,55 @@ const Orders = () => {
 
                 {/* Order Summary */}
                 <div className="mt-4 flex flex-col md:flex-row justify-between items-start md:items-center border-t pt-4 space-y-4 md:space-y-0">
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-gray-600 flex items-center">
                     Payment Method:{" "}
-                    <span className="font-medium text-gray-800 capitalize">
-                      {order.paymentMethod}
-                    </span>
+                    {order.paymentMethod.toLowerCase() === "qris" ? (
+                      <img
+                        className="h-6 mx-2"
+                        src={assets.qris_icon}
+                        alt="QRIS"
+                      />
+                    ) : order.paymentMethod.toLowerCase() === "bca" ? (
+                      <img
+                        className="h-6 mx-2"
+                        src={assets.bca_icon}
+                        alt="BCA"
+                      />
+                    ) : order.paymentMethod.toLowerCase() === "bni" ? (
+                      <img
+                        className="h-4 mx-2"
+                        src={assets.bni_icon}
+                        alt="BNI"
+                      />
+                    ) : order.paymentMethod.toLowerCase() === "bri" ? (
+                      <img
+                        className="h-6 mx-2"
+                        src={assets.bri_icon}
+                        alt="BRI"
+                      />
+                    ) : order.paymentMethod.toLowerCase() === "mandiri" ? (
+                      <img
+                        className="h-6 mx-2"
+                        src={assets.mandiri_icon}
+                        alt="Mandiri"
+                      />
+                    ) : order.paymentMethod.toLowerCase() === "indomart" ? (
+                      <img
+                        className="h-6 mx-2"
+                        src={assets.indomart_icon}
+                        alt="Indomart"
+                      />
+                    ) : order.paymentMethod.toLowerCase() === "alfamart" ? (
+                      <img
+                        className="h-6 mx-2"
+                        src={assets.alfamart_icon}
+                        alt="Alfamart"
+                      />
+                    ) : (
+                      <span className="font-medium text-gray-800 capitalize mx-2">
+                        {order.paymentMethod}
+                      </span>
+                    )}
                   </div>
                   <div
                     className={`px-3 py-1 rounded-full ${getStatusClassName(
