@@ -390,20 +390,60 @@ const AddItem = () => {
               value={formData.description}
               onChange={handleInputChange}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && e.shiftKey) {
+                if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
+
+                  const { selectionStart, selectionEnd } = e.target;
+                  const value = formData.description;
+
+                  const newValue =
+                    value.substring(0, selectionStart) +
+                    "\n" +
+                    value.substring(selectionEnd);
+
                   setFormData((prevState) => ({
                     ...prevState,
-                    description: `${prevState.description}\n`,
+                    description: newValue,
                   }));
+
+                  setTimeout(() => {
+                    e.target.selectionStart = e.target.selectionEnd =
+                      selectionStart + 1;
+                  }, 0);
+                }
+
+                if (e.key === "Tab") {
+                  e.preventDefault();
+
+                  const { selectionStart, selectionEnd } = e.target;
+                  const value = formData.description;
+                  const newValue =
+                    value.substring(0, selectionStart) +
+                    "\t" +
+                    value.substring(selectionEnd);
+
+                  setFormData((prevState) => ({
+                    ...prevState,
+                    description: newValue,
+                  }));
+
+                  setTimeout(() => {
+                    e.target.selectionStart = e.target.selectionEnd =
+                      selectionStart + 1;
+                  }, 0);
                 }
               }}
               onInput={(e) => {
                 e.target.style.height = "auto";
                 e.target.style.height = `${e.target.scrollHeight}px`;
               }}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md resize-none overflow-hidden"
+              style={{
+                overflow: "hidden",
+                resize: "none",
+              }}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
               placeholder="Write content here"
+              rows="2"
               required
             ></textarea>
           </div>
