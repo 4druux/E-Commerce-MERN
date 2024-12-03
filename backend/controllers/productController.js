@@ -32,7 +32,10 @@ const updateProductById = async (req, res) => {
 // Handler untuk menambah produk
 const addProduct = async (req, res) => {
   try {
-    const product = new Product(req.body);
+    const product = new Product({
+      ...req.body,
+      soldCount: 0,
+    });
     await product.save();
     res.json({ message: "Product added successfully", product });
   } catch (error) {
@@ -181,6 +184,30 @@ const deleteReviewToProduct = async (req, res) => {
   }
 };
 
+const sellProduct = async (req, res) => {
+  try {
+    const productId = req.params.id;
+    const { quantity } = req.body;
+
+    // Temukan produk berdasarkan ID
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Update soldCount
+    product.soldCount += quantity; // Tambahkan jumlah yang terjual
+    await product.save();
+
+    res
+      .status(200)
+      .json({ message: "Sold count updated successfully", product });
+  } catch (error) {
+    console.error("Failed to update sold count:", error);
+    res.status(500).json({ message: "Failed to update sold count", error });
+  }
+};
+
 module.exports = {
   getAllProducts,
   addProduct,
@@ -190,4 +217,5 @@ module.exports = {
   addReviewToProduct,
   deleteReviewToProduct,
   replyReviewToProduct,
+  sellProduct,
 };

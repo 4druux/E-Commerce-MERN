@@ -1,5 +1,7 @@
 const Order = require("../models/Order");
-// const socket = require("../socket"); 
+const Product = require("../models/Product"); // Pastikan untuk mengimpor model Product
+
+// const socket = require("../socket");
 
 // Fungsi untuk membuat order baru
 exports.createOrder = async (req, res) => {
@@ -9,8 +11,17 @@ exports.createOrder = async (req, res) => {
       userId: req.user._id, // Pastikan userId diambil dari pengguna yang sedang login
       username: req.user.username,
     };
+
     const order = new Order(orderData);
     await order.save();
+
+    // Update soldCount untuk setiap item dalam order
+    for (const item of order.items) {
+      await Product.findByIdAndUpdate(item.productId, {
+        $inc: { soldCount: item.quantity }, // Tambahkan jumlah yang dipesan ke soldCount
+      });
+    }
+
     res.status(201).json({ message: "Order placed successfully", order });
   } catch (error) {
     console.error("Failed to create order:", error);
@@ -59,7 +70,20 @@ exports.updateOrderStatus = async (req, res) => {
   try {
     const { orderId, status } = req.body;
 
-    // Daftar status yang valid
+    // Validasi input
+    if (!orderId || !status) {
+      return res
+        .status(400)
+        .json({ message: "Order ID and status are required" });
+    }
+
+    // Cek order
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Validasi status perubahan
     const validStatuses = [
       "Pending",
       "Paid",
@@ -74,41 +98,25 @@ exports.updateOrderStatus = async (req, res) => {
       return res.status(400).json({ message: "Invalid order status" });
     }
 
-    const order = await Order.findById(orderId);
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
-    }
-
-    // Jika pengguna bukan admin, mereka hanya bisa melakukan cancel, return, atau complete
-    if (req.user.role !== "admin") {
-      if (order.status === "Paid" && status === "Canceled") {
-        order.status = status; // Pengguna hanya bisa cancel jika status Paid
-      } else if (
-        order.status === "Shipped" &&
-        (status === "Completed" || status === "Returned")
-      ) {
-        order.status = status; // Pengguna hanya bisa return atau complete jika status Shipped
-      } else {
-        return res.status(403).json({
-          message:
-            "Invalid action. You can only update orders that are Paid or Shipped.",
-        });
-      }
-    } else {
-      // Admin bisa mengubah status ke semua status yang valid
-      order.status = status;
-    }
+    // Update status order dan tambahkan riwayat status
+    order.status = status;
+    order.statusUpdateHistory.push({
+      status: status,
+      date: new Date(),
+    });
 
     await order.save();
 
-    // Emit event untuk memberitahukan ke client bahwa pesanan telah diperbarui
-    // const io = socket.getIO();
-    // io.emit("orderUpdated", { orderId, status });
-
-    res.status(200).json({ message: "Order status updated", order });
+    res.status(200).json({
+      message: "Order status updated successfully",
+      order,
+    });
   } catch (error) {
     console.error("Failed to update order status:", error);
-    res.status(500).json({ message: "Failed to update order status", error });
+    res.status(500).json({
+      message: "Failed to update order status",
+      error: error.message,
+    });
   }
 };
 
@@ -136,5 +144,112 @@ exports.deleteOrder = async (req, res) => {
   } catch (error) {
     console.error("Failed to delete order:", error);
     res.status(500).json({ message: "Failed to delete order", error });
+  }
+};
+
+// Dalam orderController.js
+exports.createReturn = async (req, res) => {
+  try {
+    const { orderId } = req.params; // Ambil dari params
+    const { reason, description, returnImages, productId, size } = req.body;
+
+    // Validasi input
+    if (!reason || !productId || !size) {
+      return res.status(400).json({
+        message: "Missing required fields",
+      });
+    }
+
+    // Cari order
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Cari item yang akan di-return
+    const itemToReturn = order.items.find(
+      (item) => item.productId.toString() === productId && item.size === size
+    );
+
+    if (!itemToReturn) {
+      return res.status(404).json({ message: "Product not found in order" });
+    }
+
+    // Validasi status order
+    if (order.status !== "Shipped") {
+      return res.status(400).json({
+        message: "Order must be in 'Shipped' status to create a return",
+      });
+    }
+
+    // Update item dengan data return
+    itemToReturn.return = {
+      reason,
+      description,
+      returnImages,
+      status: "Pending",
+      createdAt: new Date(),
+    };
+
+    // Update status order
+    order.status = "Returned";
+
+    // Simpan perubahan
+    await order.save();
+
+    res.status(200).json({
+      message: "Return request created successfully",
+      order,
+    });
+  } catch (error) {
+    console.error("Failed to create return:", error);
+    res.status(500).json({
+      message: "Failed to create return",
+      error: error.message,
+    });
+  }
+};
+
+// Fungsi untuk mengupdate status return (admin)
+exports.updateReturnStatus = async (req, res) => {
+  try {
+    const { orderId, productId, size, status } = req.body;
+
+    // Pastikan hanya admin yang bisa
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    // Cari order
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Cari item yang di-return
+    const itemToUpdate = order.items.find(
+      (item) => item.productId.toString() === productId && item.size === size
+    );
+
+    if (!itemToUpdate) {
+      return res.status(404).json({ message: "Product not found in order" });
+    }
+
+    // Update status return
+    itemToUpdate.return.status = status;
+
+    // Simpan perubahan
+    await order.save();
+
+    res.status(200).json({
+      message: "Return status updated",
+      order,
+    });
+  } catch (error) {
+    console.error("Failed to update return status:", error);
+    res.status(500).json({
+      message: "Failed to update return status",
+      error: error.message,
+    });
   }
 };

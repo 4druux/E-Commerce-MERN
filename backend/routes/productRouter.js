@@ -10,6 +10,7 @@ const {
   addReviewToProduct,
   deleteReviewToProduct,
   replyReviewToProduct,
+  sellProduct,
 } = require("../controllers/productController");
 
 router.get("/all", getAllProducts);
@@ -25,7 +26,8 @@ router
 router.put(
   "/admin/:productId/reviews/:reviewId/reply",
   authMiddleware("admin"),
-  replyReviewToProduct 
+  replyReviewToProduct
 );
+router.post("/:id/sell", sellProduct); // Tambahkan route untuk menjual produk
 
 module.exports = router;

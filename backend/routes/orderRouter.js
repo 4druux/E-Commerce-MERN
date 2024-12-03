@@ -4,7 +4,9 @@ const {
   getOrders,
   getOrdersByUser,
   updateOrderStatus,
-  deleteOrder, // Import fungsi deleteOrder dari controller
+  deleteOrder,
+  createReturn,
+  updateReturnStatus,
 } = require("../controllers/orderController");
 const authMiddleware = require("../middleware/authMiddleware");
 
@@ -23,6 +25,10 @@ router.post("/", authMiddleware(), createOrder);
 router.put("/status", authMiddleware(), updateOrderStatus);
 
 // Admin dapat menghapus pesanan
-router.delete("/:orderId", authMiddleware("admin"), deleteOrder); // Tambahkan rute DELETE
+router.delete("/:orderId", authMiddleware("admin"), deleteOrder);
+
+router.post('/:orderId/return', authMiddleware(), createReturn);  
+
+router.put("/return-status", authMiddleware("admin"), updateReturnStatus);
 
 module.exports = router;

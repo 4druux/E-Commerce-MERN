@@ -26,7 +26,8 @@ const productSchema = new mongoose.Schema(
     subCategory: { type: String, required: true },
     sizes: [{ type: String }],
     bestseller: { type: Boolean, default: false },
-    reviews: [reviewSchema], // Reviews schema embedded in the product schema
+    reviews: [reviewSchema],
+    soldCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

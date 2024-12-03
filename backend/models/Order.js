@@ -24,16 +24,57 @@ const orderSchema = new mongoose.Schema({
       price: { type: Number, required: true },
       quantity: { type: Number, required: true },
       size: { type: String, required: true },
-      imageUrl: { type: String, required: true }, // Added field imageUrl
+      imageUrl: { type: String, required: true },
+      // Tambahkan subdokumen return di sini
+      return: {
+        reason: { type: String },
+        description: { type: String },
+        returnImages: [{ type: String }],
+        status: {
+          type: String,
+          enum: ["Not Returned", "Pending", "Approved", "Rejected"],
+          default: "Not Returned",
+        },
+        createdAt: { type: Date },
+      },
     },
   ],
   totalAmount: { type: Number, required: true },
   orderDate: { type: Date, default: Date.now },
   status: {
     type: String,
-    enum: ['Pending', 'Paid', 'Processing', 'Shipped', 'Completed', 'Returned','Canceled'], // Defined possible order statuses
-    default: 'Pending',
+    enum: [
+      "Pending",
+      "Paid",
+      "Processing",
+      "Shipped",
+      "Completed",
+      "Returned",
+      "Canceled",
+    ],
+    default: "Pending",
   },
+  statusUpdateHistory: [
+    {
+      status: {
+        type: String,
+        enum: [
+          "Pending",
+          "Paid",
+          "Processing",
+          "Shipped",
+          "Completed",
+          "Returned",
+          "Canceled",
+        ],
+        required: true,
+      },
+      date: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
 });
 
 module.exports = mongoose.model("Order", orderSchema);
