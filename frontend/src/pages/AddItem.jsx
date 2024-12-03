@@ -160,7 +160,7 @@ const AddItem = () => {
         .map((image) => convertToBase64(image));
       const imageUrls = await Promise.all(imagePromises);
 
-      await axios.post("https://ecommerce-backend-ebon-six.vercel.app/api/products/add", {
+      await axios.post("http://localhost:5173/api/products/add", {
         ...formData,
         price: unformatPrice(formData.price),
         image: imageUrls,
@@ -267,7 +267,7 @@ const AddItem = () => {
                                 className="w-8 h-8"
                               >
                                 <img
-                                  src={assets.upload_area}
+                                  src={assets.recycle_bin}
                                   alt="Remove"
                                   className="w-full h-full"
                                 />
