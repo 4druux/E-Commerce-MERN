@@ -19,7 +19,7 @@ const ForgotPassword = () => {
 
     try {
       const response = await axios.post(
-        "https://ecommerce-backend-ebon-six.vercel.app/api/user/forgot-password",
+        "http://localhost:5173/api/user/forgot-password",
         { email }
       );
       if (response.data.message) {
@@ -110,7 +110,11 @@ const ForgotPassword = () => {
         </div>
       )}
       <Link to="/" className="mb-8 group">
-        <img src={assets.forever} alt="Atlas Icon" className="w-32 sm:w-40" />
+        <img
+          src={assets.forever_icon}
+          alt="Atlas Icon"
+          className="w-32 sm:w-40"
+        />
       </Link>
 
       <div className="w-[90%] sm:max-w-md p-8 bg-white shadow-xl rounded-xl transition-all duration-500 hover:shadow-2xl  border border-gray-100 ">

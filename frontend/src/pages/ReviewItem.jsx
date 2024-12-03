@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useMemo, useRef, useContext } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import { ShopContext } from "../context/ShopContext";
 import { useParams, useNavigate } from "react-router-dom";
 import Title from "../components/Title";
-import { assets } from "../assets/assets";
+// import { assets } from "../assets/assets";
 import { formatPrice } from "../utils/formatPrice";
 import SkeletonReviewItem from "../components/SkeletonReviewItem";
 import SweetAlert from "../components/SweetAlert";
+import { ClipboardList, MessageCircleReply, Star, Trash2 } from "lucide-react";
+import { useReviewFilter } from "../utils/useReviewFilter";
 
 const ReviewItem = () => {
   const { fetchProductAndReviews, submitReplyToReview, deleteReview } =
@@ -14,14 +16,7 @@ const ReviewItem = () => {
   const [reviews, setReviews] = useState([]);
   const [product, setProduct] = useState(null);
   const [averageRating, setAverageRating] = useState(0);
-  const [selectedRatingFilter, setSelectedRatingFilter] = useState(0);
-  const [selectedSizeFilter, setSelectedSizeFilter] = useState("");
-  const [selectedDateFilter, setSelectedDateFilter] = useState("");
-  const [showImageOnly, setShowImageOnly] = useState(false);
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
-  const [isRatingDropdownOpen, setIsRatingDropdownOpen] = useState(false);
-  const [isSizeDropdownOpen, setIsSizeDropdownOpen] = useState(false);
-  const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [currentReplyId, setCurrentReplyId] = useState(null);
   const ratingDropdownRef = useRef(null);
@@ -29,11 +24,37 @@ const ReviewItem = () => {
   const dateDropdownRef = useRef(null);
 
   const navigate = useNavigate();
-  const allSizes = ["S", "M", "L", "XL", "XXL"];
 
   const [isloading, setIsLoading] = useState(true);
   const [isReply, setIsReply] = useState();
   const [isDelete, setIsDelete] = useState();
+
+  const {
+    selectedRatingFilter,
+    selectedSizeFilter,
+    showImageOnly,
+    selectedDateFilter,
+    allSizes,
+
+    setShowImageOnly,
+
+    countAllReviews,
+    countReviewsWithImage,
+    countReviewsByRating,
+
+    handleRatingFilterChange,
+    handleSizeFilterChange,
+    handleDateFilterChange,
+
+    isRatingDropdownOpen,
+    isSizeDropdownOpen,
+    isDateDropdownOpen,
+    setIsRatingDropdownOpen,
+    setIsSizeDropdownOpen,
+    setIsDateDropdownOpen,
+
+    filteredReviews,
+  } = useReviewFilter(reviews);
 
   // Fetching product and reviews
   useEffect(() => {
@@ -76,7 +97,7 @@ const ReviewItem = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [setIsDateDropdownOpen, setIsRatingDropdownOpen, setIsSizeDropdownOpen]);
 
   // Handler untuk balasan admin
   const handleReplySubmit = async (reviewId) => {
@@ -92,16 +113,6 @@ const ReviewItem = () => {
     setIsReply(false);
   };
 
-  // Handler untuk menghapus review
-  // const handleDeleteReview = async (reviewId) => {
-  //   setIsDelete(true);
-  //   await deleteReview(productId, reviewId);
-  //   setReviews((prevReviews) =>
-  //     prevReviews.filter((review) => review._id !== reviewId)
-  //   );
-  //   setIsDelete(false);
-  // };
-
   // Fungsi Rata-Rata Rating
   const calculateAverageRating = (reviews) => {
     if (reviews.length === 0) return 0;
@@ -109,204 +120,15 @@ const ReviewItem = () => {
     return totalRating / reviews.length;
   };
 
-  // Fungsi 1 star dan rating (0.0- 5.0)
-  const renderSingleStarWithRating = (rating, reviewCount) => {
-    return (
-      <div className="flex items-center">
-        <img src={assets.star_icon} alt="Star" className="w-4 text-red-500" />
-        <span className="ml-1 text-gray-800">{rating.toFixed(1)}</span>
-        <span className="ml-2 text-gray-800">({reviewCount})</span>
-      </div>
-    );
-  };
-
-  // Fungsi filter by rating tanpa gaya
-  const renderStarRatingLabel = (rating) => {
-    return (
-      <div className="flex items-center">
-        <span>Filter by Rating</span>
-        {rating > 0 && (
-          <span className="ml-2 flex items-center">
-            <span className="mr-1">(</span> 
-            <img
-              src={assets.star_icon}
-              alt="Star"
-              className="w-4 h-4 text-yellow-500"
-            />
-            <span className="ml-1">{rating})</span>{" "}
-          </span>
-        )}
-      </div>
-    );
-  };
-
-  // Fungsi filter by size tanpa gaya
-  const renderSizeLabel = (selectedSize) => {
-    return (
-      <div className="flex items-center">
-        <span>Filter by Size</span>
-        {selectedSize && (
-          <span className="ml-2 flex items-center">
-            <span className="mr-1">(</span>
-            <span>{selectedSize}</span>
-            <span className="ml-1">)</span> 
-          </span>
-        )}
-      </div>
-    );
-  };
-
-  // Fungsi render star dropdown select tanpa gaya
-  const renderModernStars = (rating, handleRatingFilterChange) => {
-    return (
-      <div className="flex flex-col gap-2">
-        {[...Array(5)].map((_, rowIndex) => {
-          const starCount = 5 - rowIndex; 
-          const reviewCount = countReviewsByRating(starCount); 
-
-          return (
-            <button
-              key={rowIndex}
-              onClick={() => handleRatingFilterChange(starCount)} 
-              className="border border-gray-300 p-2 rounded-md hover:bg-gray-100 transition focus:outline-none w-full flex items-center justify-between"
-            >
-              <div className="flex">
-                {[...Array(starCount)].map((_, starIndex) => (
-                  <img
-                    key={starIndex}
-                    src={
-                      starCount === rating
-                        ? assets.star_icon 
-                        : assets.star_dull_icon 
-                    }
-                    alt={`${starCount} Star`}
-                    className="w-5 h-5 mx-1" 
-                  />
-                ))}
-              </div>
-
-              <span className="ml-2 text-sm text-gray-600">
-                ({reviewCount})
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    );
-  };
-
-  // Fungsi render size dropdown select tanpa gaya
-  const renderModernSizes = (selectedSizeFilter, handleSizeFilterChange) => {
-    const availableSizesFromReviews = reviews.reduce((acc, review) => {
-      if (review.size && !acc.includes(review.size)) {
-        acc.push(review.size);
-      }
-      return acc;
-    }, []);
-
-    return (
-      <div>
-        {allSizes.map((size, i) => {
-          const isAvailable = availableSizesFromReviews.includes(size);
-          return (
-            <button
-              key={i}
-              onClick={() => handleSizeFilterChange(size)}
-              disabled={!isAvailable}
-            >
-              {size}
-            </button>
-          );
-        })}
-      </div>
-    );
-  };
-
-  // Fungsi render star review user
-  const renderStars = (rating, color = "text-red-500") => {
-    return (
-      <div className={`flex ${color}`}>
-        {[...Array(5)].map((_, i) => (
-          <img
-            key={i}
-            src={i < rating ? assets.star_icon : assets.star_dull_icon}
-            alt="Star"
-            className="w-4"
-          />
-        ))}
-      </div>
-    );
-  };
-
-  // Fungsi perubahan star filter
-  const handleRatingFilterChange = (rating) => {
-    setSelectedRatingFilter(selectedRatingFilter === rating ? 0 : rating);
-    setIsRatingDropdownOpen(false);
-  };
-
-  // Fungsi perubahan size filter
-  const handleSizeFilterChange = (size) => {
-    setSelectedSizeFilter(selectedSizeFilter === size ? "" : size);
+  const handleSizeFilterChangeWithDropdown = (size) => {
+    handleSizeFilterChange(size);
     setIsSizeDropdownOpen(false);
-  };
-
-  // Fungsi perubahan date filter
-  const handleDateFilterChange = (order) => {
-    setSelectedDateFilter(selectedDateFilter === order ? "" : order);
-    setIsDateDropdownOpen(false);
   };
 
   // Fungsi dynamis filter menu
   const toggleFilterMenu = () => {
     setIsFilterMenuOpen(!isFilterMenuOpen);
   };
-
-  // Filter review img,star,size,date
-  const filteredReviews = useMemo(() => {
-    const filtered = reviews.filter((review) => {
-      const ratingMatches =
-        selectedRatingFilter === 0 || review.rating === selectedRatingFilter;
-      const sizeMatches =
-        selectedSizeFilter === "" || review.size === selectedSizeFilter;
-      const imageMatches = showImageOnly
-        ? review.reviewImages.length > 0
-        : true;
-
-      return ratingMatches && sizeMatches && imageMatches;
-    });
-
-    if (selectedDateFilter === "" || selectedDateFilter === "latest") {
-      return filtered.sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-      );
-    } else if (selectedDateFilter === "oldest") {
-      return filtered.sort(
-        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-      );
-    }
-
-    return filtered;
-  }, [
-    reviews,
-    selectedRatingFilter,
-    selectedSizeFilter,
-    showImageOnly,
-    selectedDateFilter,
-  ]);
-
-  // Hitung total semua review (All)
-  const countAllReviews = reviews.length;
-
-  // Hitung review dengan gambar (With Image) yang sesuai dengan filter rating
-  const countReviewsWithImage = reviews.filter(
-    (review) =>
-      review.reviewImages.length > 0 &&
-      (selectedRatingFilter === 0 || review.rating === selectedRatingFilter)
-  ).length;
-
-  // Hitung review berdasarkan rating tertentu (Rating)
-  const countReviewsByRating = (rating) =>
-    reviews.filter((review) => review.rating === rating).length;
 
   const handleDeleteReview = async (reviewId) => {
     SweetAlert({
@@ -324,7 +146,7 @@ const ReviewItem = () => {
           prevReviews.filter((review) => review._id !== reviewId)
         );
         setIsDelete(false);
-  
+
         SweetAlert({
           title: "Review Deleted",
           message: "The review has been successfully deleted.",
@@ -335,7 +157,6 @@ const ReviewItem = () => {
       }
     });
   };
-  
 
   return (
     <div className="px-4 py-8 sm:px-6 lg:px-0 max-w-6xl mx-auto">
@@ -366,9 +187,19 @@ const ReviewItem = () => {
                   </div>
                 )}
                 <div className="flex flex-col space-y-4 w-full">
-                  <h1 className="font-medium text-2xl mt-2 line-clamp-2">{product.name}</h1>
+                  <h1 className="font-medium text-2xl mt-2 line-clamp-2">
+                    {product.name}
+                  </h1>
                   <div className="flex items-center gap-1 mt-2">
-                    {renderSingleStarWithRating(averageRating, reviews.length)}
+                    <div className="flex items-center text-orange-500">
+                      <Star fill="currentColor" className="w-4 h-4" />
+                      <span className="ml-1 text-gray-700 text-base">
+                        {averageRating.toFixed(1)}
+                      </span>
+                    </div>
+                    <span className="text-gray-500 text-sm">
+                      ({reviews.length})
+                    </span>
                   </div>
                   <p className="text-gray-600 text-sm md:text-base line-clamp-2">
                     {product.description}
@@ -402,20 +233,18 @@ const ReviewItem = () => {
           </div>
 
           {isFilterMenuOpen && (
-            <div className="my-4 border p-4">
+            <div className="my-4 border p-4 flex flex-col rounded-2xl shadow-md bg-white transition-all duration-300  hover:border-gray-300">
               <div className="flex flex-wrap gap-4 justify-start">
                 {/* All Button */}
                 <button
-                  className={`border px-5 py-3 text-sm flex flex-col items-center justify-center w-full sm:w-auto ${
+                  className={`border px-5 py-3 text-sm text-gray-600 flex flex-col items-center justify-center w-full sm:w-auto rounded-md  bg-white transition-all duration-300 ${
                     !selectedRatingFilter &&
                     !selectedSizeFilter &&
                     !showImageOnly
-                      ? "font-bold border-black"
+                      ? "font-medium shadow-md sm:shadow-lg border-gray-300 text-gray-950"
                       : ""
                   }`}
                   onClick={() => {
-                    setSelectedRatingFilter(0);
-                    setSelectedSizeFilter("");
                     setShowImageOnly(false);
                   }}
                 >
@@ -425,8 +254,10 @@ const ReviewItem = () => {
 
                 {/* With Image Button */}
                 <button
-                  className={`border px-5 py-3 text-sm flex flex-col items-center justify-center w-full sm:w-auto ${
-                    showImageOnly ? "font-bold border-black" : ""
+                  className={`border px-5 py-3 text-sm text-gray-600 flex flex-col items-center justify-center w-full sm:w-auto rounded-md  bg-white transition-all duration-300 ${
+                    showImageOnly
+                      ? "font-medium shadow-md sm:shadow-lg border-gray-300 text-gray-950"
+                      : ""
                   }`}
                   onClick={() => setShowImageOnly(!showImageOnly)}
                 >
@@ -445,11 +276,29 @@ const ReviewItem = () => {
                     onClick={() =>
                       setIsRatingDropdownOpen(!isRatingDropdownOpen)
                     }
-                    className={`border px-4 py-3 text-sm flex flex-col items-center justify-center w-full sm:w-auto ${
-                      selectedRatingFilter ? "font-bold border-black" : ""
+                    className={`border px-5 py-3 text-sm text-gray-600 flex flex-col items-center justify-center w-full sm:w-auto rounded-md  bg-white transition-all duration-300 ${
+                      selectedRatingFilter
+                        ? "font-medium shadow-md sm:shadow-lg border-gray-300 text-gray-950"
+                        : ""
                     }`}
                   >
-                    {renderStarRatingLabel(selectedRatingFilter)}
+                    <div className="flex items-center">
+                      <span>Filter by Rating</span>
+                      {selectedRatingFilter > 0 && (
+                        <span className="ml-2 flex items-center">
+                          <span className="mr-1">(</span>
+                          <Star
+                            fill="currentColor"
+                            className={`w-4 h-4 ${
+                              selectedRatingFilter > 0
+                                ? "text-orange-500"
+                                : "text-orange-300 opacity-60"
+                            }`}
+                          />
+                          <span className="ml-1">{selectedRatingFilter})</span>
+                        </span>
+                      )}
+                    </div>
                     <span className="text-xs mt-1">
                       ({countReviewsByRating(selectedRatingFilter)})
                     </span>
@@ -458,13 +307,68 @@ const ReviewItem = () => {
                   {isRatingDropdownOpen && (
                     <div
                       className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-10 p-2"
-                      style={{ minWidth: "200px" }}
+                      style={{ minWidth: "150px" }}
                     >
-                      <div className="flex flex-col items-start gap-2">
-                        {renderModernStars(
-                          selectedRatingFilter,
-                          handleRatingFilterChange
-                        )}
+                      <div className="flex flex-col gap-2">
+                        {[...Array(5)].map((_, rowIndex) => {
+                          const starCount = 5 - rowIndex;
+                          const reviewCount = countReviewsByRating(starCount);
+
+                          return (
+                            <button
+                              key={rowIndex}
+                              onClick={() =>
+                                reviewCount > 0 &&
+                                handleRatingFilterChange(starCount)
+                              }
+                              className={`p-2 rounded-md transition focus:outline-none w-full flex items-center justify-between ${
+                                reviewCount === 0
+                                  ? "cursor-not-allowed opacity-50"
+                                  : "group cursor-pointer"
+                              } ${
+                                starCount === selectedRatingFilter
+                                  ? "font-bold border-black"
+                                  : ""
+                              } ${
+                                starCount !== 1
+                                  ? "border-b border-gray-300"
+                                  : ""
+                              }`}
+                              disabled={reviewCount === 0}
+                            >
+                              {/* Render stars */}
+                              <div className="flex space-x-1">
+                                {[...Array(starCount)].map((_, starIndex) => (
+                                  <Star
+                                    key={starIndex}
+                                    fill="currentColor"
+                                    className={`w-4 h-4 transition-all duration-300 ${
+                                      reviewCount === 0
+                                        ? "text-gray-200"
+                                        : starCount === selectedRatingFilter
+                                        ? "text-orange-500"
+                                        : "text-orange-300 opacity-60"
+                                    } ${
+                                      reviewCount > 0 &&
+                                      "group-hover:text-orange-500 group-hover:opacity-100"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+
+                              {/* Display review count next to stars */}
+                              <span
+                                className={`ml-2 text-sm ${
+                                  reviewCount === 0
+                                    ? "text-gray-400"
+                                    : "text-gray-600 group-hover:text-black"
+                                }`}
+                              >
+                                ({reviewCount})
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -477,43 +381,65 @@ const ReviewItem = () => {
                 >
                   <button
                     onClick={() => setIsSizeDropdownOpen(!isSizeDropdownOpen)}
-                    className={`border px-5 py-3 text-sm flex flex-col items-center justify-center w-full sm:w-auto ${
-                      selectedSizeFilter ? "font-bold border-black" : ""
+                    className={`border px-5 py-3 text-sm text-gray-600 flex flex-col items-center justify-center w-full sm:w-auto rounded-md  bg-white transition-all duration-300 ${
+                      selectedSizeFilter
+                        ? "font-medium shadow-md sm:shadow-lg border-gray-300 text-gray-950"
+                        : ""
                     }`}
                   >
-                    {renderSizeLabel(selectedSizeFilter)}
+                    <div className="flex items-center">
+                      <span>Filter by Size</span>
+                      {selectedSizeFilter && (
+                        <span className="ml-2 flex items-center">
+                          <span className="mr-1">(</span>
+                          <span>{selectedSizeFilter}</span>
+                          <span className="ml-1">)</span>
+                        </span>
+                      )}
+                    </div>
                   </button>
 
                   {isSizeDropdownOpen && (
                     <div className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-10 sm:w-auto">
                       <div className="flex sm:justify-between justify-center gap-2 p-2">
-                        {renderModernSizes(
-                          selectedSizeFilter,
-                          handleSizeFilterChange
-                        ).props.children.map((button, i) => (
-                          <button
-                            key={i}
-                            onClick={button.props.onClick}
-                            className={`w-12 h-10 flex items-center justify-center border rounded-md text-sm transition-transform transform ${
-                              selectedSizeFilter === button.props.children
-                                ? "bg-gray-950 text-white"
-                                : reviews
-                                    .map((review) => review.size)
-                                    .includes(button.props.children)
-                                ? "bg-gray-100 hover:bg-gray-200"
-                                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                            } ${
-                              reviews
-                                .map((review) => review.size)
-                                .includes(button.props.children)
-                                ? "hover:scale-105"
-                                : ""
-                            } focus:outline-none`}
-                            disabled={button.props.disabled}
-                          >
-                            {button.props.children}
-                          </button>
-                        ))}
+                        {allSizes.map((size, i) => {
+                          const availableSizesFromReviews = reviews.reduce(
+                            (acc, review) => {
+                              if (review.size && !acc.includes(review.size)) {
+                                acc.push(review.size);
+                              }
+                              return acc;
+                            },
+                            []
+                          );
+
+                          const isAvailable =
+                            availableSizesFromReviews.includes(size);
+                          const reviewCountForSize = reviews.filter(
+                            (review) => review.size === size
+                          ).length;
+
+                          return (
+                            <button
+                              key={i}
+                              onClick={() =>
+                                handleSizeFilterChangeWithDropdown(size)
+                              }
+                              className={`w-12 h-10 flex items-center justify-center border  text-sm transition-transform transform ${
+                                selectedSizeFilter === size
+                                  ? "bg-gray-900 text-white"
+                                  : isAvailable
+                                  ? "bg-gray-100 hover:bg-gray-200"
+                                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                              } ${
+                                isAvailable ? "hover:scale-105" : ""
+                              } focus:outline-none`}
+                              disabled={reviewCountForSize === 0}
+                            >
+                              {size}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -526,8 +452,10 @@ const ReviewItem = () => {
                 >
                   <button
                     onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
-                    className={`border px-5 py-3 text-sm flex flex-col items-center justify-center w-full sm:w-auto ${
-                      selectedDateFilter ? "font-bold border-black" : ""
+                    className={`border px-5 py-3 text-sm text-gray-600 flex flex-col items-center justify-center w-full sm:w-auto rounded-md  bg-white transition-all duration-300 ${
+                      selectedDateFilter
+                        ? "font-medium shadow-md sm:shadow-lg border-gray-300 text-gray-950"
+                        : ""
                     }`}
                   >
                     {selectedDateFilter
@@ -538,24 +466,27 @@ const ReviewItem = () => {
                   </button>
 
                   {isDateDropdownOpen && (
-                    <div className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-10 sm:w-auto">
-                      <div className="flex sm:justify-between justify-center gap-2 p-2">
+                    <div
+                      className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-10 "
+                      style={{ minWidth: "128px" }}
+                    >
+                      <div className="flex flex-col sm:justify-between justify-center gap-2 p-2">
                         <button
                           onClick={() => handleDateFilterChange("latest")}
-                          className={`w-full sm:w-auto px-4 py-2 text-sm rounded-md transition-colors duration-200 ${
+                          className={`w-full  px-4 py-2 text-sm rounded-md transition-colors duration-200 ${
                             selectedDateFilter === "latest"
-                              ? "bg-black text-white"
-                              : "bg-white text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                              ? "bg-gray-900 text-white"
+                              : "bg-gray-100 hover:bg-gray-200 "
                           }`}
                         >
                           Newest
                         </button>
                         <button
                           onClick={() => handleDateFilterChange("oldest")}
-                          className={`w-full sm:w-auto px-4 py-2 text-sm rounded-md transition-colors duration-200 ${
+                          className={`w-full  px-4 py-2 text-sm rounded-md transition-colors duration-200 ${
                             selectedDateFilter === "oldest"
-                              ? "bg-black text-white"
-                              : "bg-white text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                              ? "bg-gray-900 text-white"
+                              : "bg-gray-100 hover:bg-gray-200 "
                           }`}
                         >
                           Oldest
@@ -570,9 +501,15 @@ const ReviewItem = () => {
 
           {/* Menampilkan review yang difilter */}
           {filteredReviews.length === 0 ? (
-            <p className="text-center mt-8 text-gray-600">
-              Tidak ada review untuk produk ini.
-            </p>
+            <div className="flex flex-col items-center justify-center min-h-[300px] text-center w-full">
+              <ClipboardList
+                className="h-24 w-24 text-gray-600 mb-4"
+                strokeWidth={1}
+              />
+              <p className="text-xl text-gray-600">
+                No reviews matching the selected filters.
+              </p>
+            </div>
           ) : (
             <div className="space-y-6 mt-8">
               {filteredReviews.map((review) => (
@@ -586,7 +523,19 @@ const ReviewItem = () => {
                     </p>
 
                     <div className="flex items-center">
-                      {renderStars(review.rating)}
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          fill={
+                            i < review.rating ? "currentColor" : "currentColor"
+                          }
+                          className={`w-4 h-4 ${
+                            i < review.rating
+                              ? "text-orange-500"
+                              : "text-orange-300 opacity-60"
+                          }`}
+                        />
+                      ))}
                     </div>
 
                     <p className="text-sm text-gray-500">
@@ -652,8 +601,7 @@ const ReviewItem = () => {
                           : setCurrentReplyId(review._id)
                       }
                     >
-                      <img
-                        src={assets.chat_icon}
+                      <MessageCircleReply
                         alt="Chat"
                         className="w-6 h-6 filter group-hover:invert"
                       />
@@ -663,10 +611,9 @@ const ReviewItem = () => {
                       onClick={() => handleDeleteReview(review._id)}
                       className="bg-black px-4 py-2 rounded-md active:bg-gray-800 transition-all duration-300"
                     >
-                      <img
-                        src={assets.recycle_bin}
-                        alt="Delete"
+                      <Trash2
                         className="w-6 h-6 filter invert contrast-200 brightness-200"
+                        alt="Delete"
                       />
                     </button>
                   </div>

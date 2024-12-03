@@ -2,10 +2,9 @@ import React, { useState, useRef, useEffect } from "react";
 import { ClipboardList, Star } from "lucide-react";
 import { FaTimes } from "react-icons/fa";
 import PropTypes from "prop-types";
-import { useReviewFilter } from "../utils/useReviewFilter"; // Sesuaikan path import
+import { useReviewFilter } from "../utils/useReviewFilter";
 
 const Reviews = ({ reviews, productData }) => {
-  // Gunakan custom hook
   const {
     selectedRatingFilter,
     selectedSizeFilter,
@@ -333,7 +332,7 @@ const Reviews = ({ reviews, productData }) => {
                           } ${
                             isAvailable ? "hover:scale-105" : ""
                           } focus:outline-none`}
-                          disabled={reviewCountForSize === 0} // Disable if no reviews for this size
+                          disabled={reviewCountForSize === 0}
                         >
                           {size}
                         </button>
@@ -398,7 +397,7 @@ const Reviews = ({ reviews, productData }) => {
         </div>
       )}
 
-      <div className="flex flex-col gap-4 border text-sm  p-6 rounded-2xl shadow-lg bg-white mb-8 transition-all duration-300 hover:shadow-2xl hover:border-gray-300 justify-between items-start">
+      <div className="flex flex-col gap-4 border text-sm  p-6 rounded-2xl shadow-md bg-white mb-8 transition-all duration-300 hover:shadow-lg hover:border-gray-300 justify-between items-start">
         {activeTab === "description" ? (
           <div className="whitespace-pre-line">{productData.description}</div>
         ) : filteredReviews.length > 0 ? (

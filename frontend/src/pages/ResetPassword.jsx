@@ -111,7 +111,7 @@ const ResetPassword = () => {
         </div>
       )}
       <Link to="/" className="my-8">
-        <img src={assets.forever} alt="Atlas Icon" className="w-32 sm:w-40" />
+        <img src={assets.forever_icon} alt="Atlas Icon" className="w-32 sm:w-40" />
       </Link>
       <form
         onSubmit={handleResetPassword}

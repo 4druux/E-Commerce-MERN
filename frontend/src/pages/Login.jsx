@@ -20,7 +20,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        "https://ecommerce-backend-ebon-six.vercel.app/api/user/login",
+        "http://localhost:5173/api/user/login",
         {
           email,
           password,
@@ -90,7 +90,7 @@ const Login = () => {
         </div>
       )}
       <Link to="/" className="my-8">
-        <img src={assets.forever} alt="Atlas Icon" className="w-32 sm:w-40 " />
+        <img src={assets.forever_icon} alt="Atlas Icon" className="w-32 sm:w-40 " />
       </Link>
       <form className="flex flex-col items-center w-[90%] sm:max-w-md m-auto mt-14 gap-6 p-5 sm:p-8 bg-white shadow-xl rounded-xl transition-all duration-500 hover:shadow-2xl  border border-gray-100">
         <div className="inline-flex items-center gap-2 mb-4">

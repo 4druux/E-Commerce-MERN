@@ -6,8 +6,7 @@ import PropTypes from "prop-types";
 import { FaTimes } from "react-icons/fa";
 
 const ModalLogin = ({ onLoginSuccess }) => {
-  const { loginUser, isLoginModalOpen, setIsLoginModalOpen } =
-    useContext(ShopContext);
+  const { loginUser, isModalLogin, setIsModalLogin } = useContext(ShopContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -30,7 +29,7 @@ const ModalLogin = ({ onLoginSuccess }) => {
 
     try {
       const response = await axios.post(
-        "https://ecommerce-backend-ebon-six.vercel.app/api/user/login",
+        "http://localhost:5173/api/user/login",
         { email, password }
       );
 
@@ -43,7 +42,7 @@ const ModalLogin = ({ onLoginSuccess }) => {
         localStorage.setItem("tokenExpiration", expirationTime);
 
         loginUser(token);
-        setIsLoginModalOpen(false);
+        setIsModalLogin(false);
         resetInputs();
 
         // Navigasi berdasarkan role
@@ -79,7 +78,7 @@ const ModalLogin = ({ onLoginSuccess }) => {
   };
 
   useEffect(() => {
-    if (isLoginModalOpen) {
+    if (isModalLogin) {
       document.body.style.overflow = "hidden";
       setTimeout(() => setIsModalVisible(true), 100);
     } else {
@@ -90,7 +89,7 @@ const ModalLogin = ({ onLoginSuccess }) => {
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [isLoginModalOpen]);
+  }, [isModalLogin]);
 
   const handleClickOutside = (e) => {
     if (e.target.id === "modal-overlay") {
@@ -101,11 +100,11 @@ const ModalLogin = ({ onLoginSuccess }) => {
   const closeModalWithAnimation = () => {
     setIsModalVisible(false);
     setTimeout(() => {
-      setIsLoginModalOpen(false);
+      setIsModalLogin(false);
     }, 700);
   };
 
-  if (!isLoginModalOpen) return null;
+  if (!isModalLogin) return null;
 
   return (
     <div

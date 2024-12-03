@@ -16,7 +16,11 @@ const Footer = () => {
       <div className="flex flex-col lg:grid lg:grid-cols-12 gap-10 lg:gap-14 my-10 mt-40 text-sm">
         {/* Company Section */}
         <div className="col-span-4">
-          <img src={assets.atlas_icon} className="mb-5 w-10" alt="Atlas Icon" />
+          <img
+            src={assets.forever_icon}
+            className="mb-5 w-40 h-12"
+            alt="Atlas Icon"
+          />
           <p className="w-full text-gray-600">
             Lorem ipsum dolor sit amet consectetur adipisicing elit. Deserunt
             illum culpa quo cupiditate minus, sequi repudiandae dolor obcaecati

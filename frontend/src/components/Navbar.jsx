@@ -1,17 +1,23 @@
 import React, { useContext, useState, useEffect, useRef } from "react";
 import { assets } from "../assets/assets";
-import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { ShopContext } from "../context/ShopContext";
+import ModalLogin from "./ModalLogin";
 
 const Navbar = () => {
   const [visible, setVisible] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false); 
-  const { setShowSearch, getCartCount, isLoggedIn, logoutUser } =
-    useContext(ShopContext);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const {
+    setShowSearch,
+    getCartCount,
+    isLoggedIn,
+    logoutUser,
+    setIsModalLogin,
+    isModalLogin,
+  } = useContext(ShopContext);
   const [loginStatus, setLoginStatus] = useState(isLoggedIn);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
 
   const dropdownRef = useRef(null);
   const sidebarRef = useRef(null);
@@ -47,8 +53,8 @@ const Navbar = () => {
         setIsDropdownOpen(false);
       }
       if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-        setVisible(false); 
-        document.body.classList.remove("overflow-hidden"); 
+        setVisible(false);
+        document.body.classList.remove("overflow-hidden");
       }
     };
 
@@ -72,7 +78,7 @@ const Navbar = () => {
 
   const isCollectionPage = location.pathname === "/collection";
 
-   useEffect(() => {
+  useEffect(() => {
     window.scrollTo(0, 0);
   }, [location]);
 
@@ -80,7 +86,7 @@ const Navbar = () => {
     if (loginStatus) {
       setIsDropdownOpen((prev) => !prev);
     } else {
-      navigate("/login");
+      setIsDropdownOpen(true);
     }
   };
 
@@ -100,7 +106,7 @@ const Navbar = () => {
         <div className="bg-white w-full">
           <div className="max-w-[100%] md:max-w-[85%] lg:max-w-[85%] xl:max-w-[82%] 2xl:max-w-[81%] mx-auto px-4 flex items-center justify-between py-5 font-medium relative">
             <Link to="/">
-              <img src={assets.atlas_icon} className="w-9" alt="Logo" />
+              <img src={assets.forever_logo} className="w-9" alt="Logo" />
             </Link>
 
             {/* Desktop Navigation */}
@@ -186,6 +192,35 @@ const Navbar = () => {
                   alt="Profile"
                   onClick={handleProfileClick}
                 />
+
+                {/* Dropdown untuk pengguna yang belum login */}
+                {!loginStatus && (
+                  <div
+                    className={`absolute z-50 right-0 mt-4 w-36 py-3 px-4 bg-white text-gray-700 rounded-lg shadow-lg transition-all duration-300 ease-in-out transform ${
+                      isDropdownOpen
+                        ? "opacity-100 visible translate-y-0"
+                        : "opacity-0 invisible translate-y-[-10px]"
+                    }`}
+                  >
+                    <p
+                      onClick={() => {
+                        setIsModalLogin(true);
+                        setIsDropdownOpen(false);
+                      }}
+                      className="block py-2 px-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 rounded-md transition-colors duration-200 cursor-pointer"
+                    >
+                      Login
+                    </p>
+                    <Link
+                      to="/register"
+                      className="block py-2 px-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 rounded-md transition-colors duration-200"
+                      onClick={() => setIsDropdownOpen(false)}
+                    >
+                      Register
+                    </Link>
+                  </div>
+                )}
+
                 {loginStatus && (
                   <div
                     className={`absolute z-50 right-0 mt-4 w-36 py-3 px-4 bg-white text-gray-700 rounded-lg shadow-lg transition-all duration-300 ease-in-out transform ${
@@ -308,9 +343,9 @@ const Navbar = () => {
         </div>
       </div>
 
-      <div className="pt-24">
-        {/* Konten utama mulai di sini */}
-      </div>
+      {isModalLogin && <ModalLogin />}
+
+      <div className="pt-24">{/* Konten utama mulai di sini */}</div>
     </>
   );
 };

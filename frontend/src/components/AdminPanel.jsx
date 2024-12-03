@@ -19,7 +19,7 @@ const AdminPanel = () => {
   };
 
   const handleLogout = () => {
-    navigate("/admin/login");
+    navigate("/login");
   };
 
   useEffect(() => {

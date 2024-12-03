@@ -207,6 +207,7 @@ const Collection = () => {
                     name={item.name}
                     price={item.price}
                     reviews={item.reviews}
+                    soldCount={item.soldCount}
                   />
                 ))}
           </div>

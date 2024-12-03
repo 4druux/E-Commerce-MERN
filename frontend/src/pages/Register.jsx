@@ -228,7 +228,7 @@ const Register = () => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        "https://ecommerce-frontend-beta-dusky.vercel.app/api/user/register",
+        "http://localhost:5173/api/user/register",
         {
           username,
           email,
@@ -257,7 +257,7 @@ const Register = () => {
 
     try {
       const response = await axios.post(
-        "https://ecommerce-frontend-beta-dusky.vercel.app/api/user/verify-otp",
+        "http://localhost:5173/api/user/verify-otp",
         {
           email,
           otp,
@@ -308,7 +308,7 @@ const Register = () => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        "https://ecommerce-frontend-beta-dusky.vercel.app/api/user/resend-otp",
+        "http://localhost:5173/api/user/resend-otp",
         { email }
       );
 
@@ -382,7 +382,7 @@ const Register = () => {
         )}
         <Link to="/" className="mb-8 group">
           <img
-            src={assets.forever}
+            src={assets.forever_icon}
             alt="Atlas Icon"
             className="w-32 sm:w-40 "
           />
@@ -599,7 +599,11 @@ const Register = () => {
         </div>
       )}
       <Link to="/" className="my-8">
-        <img src={assets.forever} alt="Atlas Icon" className="w-32 sm:w-40" />
+        <img
+          src={assets.forever_icon}
+          alt="Atlas Icon"
+          className="w-32 sm:w-40"
+        />
       </Link>
       <form
         onSubmit={onSubmitHandler}
