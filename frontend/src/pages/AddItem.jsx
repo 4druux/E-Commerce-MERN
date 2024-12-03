@@ -267,7 +267,7 @@ const AddItem = () => {
                                 className="w-8 h-8"
                               >
                                 <img
-                                  src={assets.recycle_bin}
+                                  src={assets.upload_area}
                                   alt="Remove"
                                   className="w-full h-full"
                                 />
