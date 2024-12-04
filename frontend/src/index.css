@@ -19,8 +19,7 @@ a.active hr {
 }
 
 ::-webkit-scrollbar {
-  width: 12px;
-  /* display: none; */
+  width: 11px;
 }
 
 ::-webkit-scrollbar-track {
@@ -28,7 +27,7 @@ a.active hr {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #6b7280;
+  background: #465164;
   border-radius: 50px;
 }
 

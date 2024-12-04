@@ -397,73 +397,77 @@ const Reviews = ({ reviews, productData }) => {
         </div>
       )}
 
-      <div className="flex flex-col gap-4 border text-sm  p-6 rounded-2xl shadow-md bg-white mb-8 transition-all duration-300 hover:shadow-lg hover:border-gray-300 justify-between items-start">
+      <div className="flex flex-col gap-4 border text-sm  p-6 rounded-2xl shadow-md bg-white mb-8 transition-all duration-300  hover:border-gray-300 justify-between items-start">
         {activeTab === "description" ? (
           <div className="whitespace-pre-line">{productData.description}</div>
         ) : filteredReviews.length > 0 ? (
-          filteredReviews.map((review, index) => (
-            <div
-              key={index}
-              className={`w-full ${
-                index < filteredReviews.length - 1
-                  ? "border-b border-gray-300"
-                  : ""
-              } pb-4`}
-            >
-              <div className="flex flex-col items-start gap-2">
-                <p className="font-medium text-gray-800">{review.username}</p>
+          <div className="w-full max-h-[100vh] overflow-y-auto [&::-webkit-scrollbar]:w-[4px] scrollbar-track-gray-100 scrollbar-thumb-gray-300">
+            {filteredReviews.map((review, index) => (
+              <div
+                key={index}
+                className={`w-full ${
+                  index < filteredReviews.length - 1
+                    ? "border-b border-gray-300"
+                    : ""
+                } pb-4`}
+              >
+                <div className="flex flex-col items-start gap-2">
+                  <p className="font-medium text-gray-800">{review.username}</p>
 
-                <div className="flex items-center space-x-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      fill={i < review.rating ? "currentColor" : "currentColor"}
-                      className={`w-4 h-4 ${
-                        i < review.rating
-                          ? "text-orange-500"
-                          : "text-orange-300 opacity-60"
-                      }`}
-                    />
-                  ))}
-                </div>
-
-                <p className="text-gray-600 flex gap-1">
-                  Size:
-                  <span className="text-gray-800">{review.size}</span>
-                </p>
-                <p className="text-gray-800">{review.reviewText}</p>
-                {review.reviewImages && review.reviewImages.length > 0 && (
-                  <div className="flex gap-2 mt-2">
-                    {review.reviewImages.map((img, imgIndex) => (
-                      <img
-                        key={imgIndex}
-                        src={img}
-                        alt={`Review Image ${imgIndex + 1}`}
-                        className="w-24 h-24 object-cover rounded cursor-pointer"
-                        onClick={() => openReviewModal(img)}
+                  <div className="flex items-center space-x-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        fill={
+                          i < review.rating ? "currentColor" : "currentColor"
+                        }
+                        className={`w-4 h-4 ${
+                          i < review.rating
+                            ? "text-orange-500"
+                            : "text-orange-300 opacity-60"
+                        }`}
                       />
                     ))}
                   </div>
-                )}
-                <p className="text-gray-500 text-xs mt-2">
-                  {new Intl.DateTimeFormat("en-GB", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                  }).format(new Date(review.createdAt))}
-                </p>
 
-                {review.adminReply && (
-                  <div className="mt-4 p-4 bg-gray-50 rounded-md shadow-inner w-full">
-                    <p className="text-gray-800 font-semibold">
-                      admin response
-                    </p>
-                    <p className="text-gray-700">{review.adminReply}</p>
-                  </div>
-                )}
+                  <p className="text-gray-600 flex gap-1">
+                    Size:
+                    <span className="text-gray-800">{review.size}</span>
+                  </p>
+                  <p className="text-gray-800">{review.reviewText}</p>
+                  {review.reviewImages && review.reviewImages.length > 0 && (
+                    <div className="flex gap-2 mt-2">
+                      {review.reviewImages.map((img, imgIndex) => (
+                        <img
+                          key={imgIndex}
+                          src={img}
+                          alt={`Review Image ${imgIndex + 1}`}
+                          className="w-24 h-24 object-cover rounded cursor-pointer"
+                          onClick={() => openReviewModal(img)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-gray-500 text-xs mt-2">
+                    {new Intl.DateTimeFormat("en-GB", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    }).format(new Date(review.createdAt))}
+                  </p>
+
+                  {review.adminReply && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-md shadow-inner w-full">
+                      <p className="text-gray-800 font-semibold">
+                        admin response
+                      </p>
+                      <p className="text-gray-700">{review.adminReply}</p>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))
+            ))}
+          </div>
         ) : (
           <div className="flex flex-col items-center justify-center min-h-[300px] text-center w-full">
             <ClipboardList

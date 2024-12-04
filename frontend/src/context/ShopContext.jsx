@@ -46,11 +46,11 @@ const ShopContextProvider = (props) => {
 
   const fetchOrders = useCallback(async () => {
     const token = localStorage.getItem("authToken");
-    const userRole = localStorage.getItem("userRole"); // Get user role from localStorage
+    const userRole = localStorage.getItem("userRole");
 
     if (!token) {
       toast.error("No token found. Please log in again.");
-      navigate(userRole === "admin" ? "/admin/login" : "/login");
+      navigate(userRole === "admin" ? "/login" : "/login");
       return;
     }
 
@@ -78,8 +78,7 @@ const ShopContextProvider = (props) => {
       if (error.response && error.response.status === 401) {
         setIsLoggedIn(false);
         localStorage.removeItem("authToken");
-        toast.error("Session expired. Please log in again.");
-        navigate(userRole === "admin" ? "/admin/login" : "/login");
+        navigate(userRole === "admin" ? "/login" : "/login");
       } else {
         toast.error("Failed to load orders.");
       }
@@ -100,7 +99,7 @@ const ShopContextProvider = (props) => {
         localStorage.removeItem("tokenExpiration");
 
         toast.error("Session expired. Please log in again.");
-        navigate(userRole === "admin" ? "/admin/login" : "/login");
+        navigate(userRole === "admin" ? "/login" : "/login");
       }
     };
 
@@ -164,9 +163,8 @@ const ShopContextProvider = (props) => {
   const addToCart = async (itemId, size, price, name, quantity = 1) => {
     if (!isLoggedIn) {
       navigate("/login");
-      return;
+      return false;
     }
-
     try {
       const token = localStorage.getItem("authToken");
 
@@ -179,10 +177,11 @@ const ShopContextProvider = (props) => {
         (item) => item.productId === itemId && item.size === size
       );
 
+      let response;
       if (existingItem) {
         const updatedQuantity = existingItem.quantity + quantity;
 
-        const updateResponse = await axios.put(
+        response = await axios.post(
           "http://localhost:5001/api/cart/update",
           {
             productId: itemId,
@@ -192,7 +191,7 @@ const ShopContextProvider = (props) => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        setCartItems(updateResponse.data.items);
+        setCartItems(response.data.items);
       } else {
         const productResponse = await axios.get(
           `http://localhost:5001/api/products/${itemId}`
@@ -212,9 +211,8 @@ const ShopContextProvider = (props) => {
           name,
           imageUrl,
         };
-
         // Tambahkan ke keranjang
-        const response = await axios.post(
+        response = await axios.post(
           "http://localhost:5001/api/cart/add",
           dataToSend,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -222,9 +220,17 @@ const ShopContextProvider = (props) => {
 
         setCartItems(response.data.items);
       }
+      return true;
     } catch (error) {
       console.error("Failed to add item to cart:", error);
-      toast.error("Failed to add item to cart.");
+      if (error.response) {
+        console.error("Server error:", error.response.data);
+      } else if (error.request) {
+        console.error("Network error");
+      } else {
+        console.error("Unexpected error");
+      }
+      return false;
     }
   };
 

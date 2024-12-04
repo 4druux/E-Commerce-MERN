@@ -54,14 +54,38 @@ const Collection = () => {
     }
 
     // Sorting the filtered products
+    let sortedProducts;
     switch (sortType) {
       case "low-high":
-        return filteredProducts.sort((a, b) => a.price - b.price);
+        sortedProducts = filteredProducts.sort((a, b) => a.price - b.price);
+        break;
       case "high-low":
-        return filteredProducts.sort((a, b) => b.price - a.price);
+        sortedProducts = filteredProducts.sort((a, b) => b.price - a.price);
+        break;
+      case "best-seller":
+        // Urutkan berdasarkan soldCount
+        sortedProducts = filteredProducts.sort(
+          (a, b) => b.soldCount - a.soldCount
+        );
+        break;
       default:
-        return filteredProducts;
+        sortedProducts = filteredProducts;
     }
+
+    // Tentukan produk top selling untuk ranking
+    const topSellingProducts = [...products]
+      .sort((a, b) => b.soldCount - a.soldCount)
+      .slice(0, 3);
+
+    // Add rank to products
+    return sortedProducts.map((product) => {
+      const rank =
+        topSellingProducts.findIndex((p) => p._id === product._id) + 1;
+      return {
+        ...product,
+        rank: rank > 0 ? rank : null,
+      };
+    });
   }, [products, search, showSearch, category, subCategory, sortType]);
 
   useEffect(() => {
@@ -84,7 +108,7 @@ const Collection = () => {
   ];
 
   return (
-    <div className="flex flex-col sm:flex-row gap-1 sm:gap-10 pt-10 border-t">
+    <div className="flex flex-col lg:flex-row gap-1 sm:gap-10 pt-10 border-t">
       {/* Filter Options */}
       <div className="min-w-60">
         <p
@@ -94,7 +118,7 @@ const Collection = () => {
           FILTERS
           <img
             src={assets.dropdown_icon}
-            className={`h-3 ml-2 sm:hidden ${showFilter ? "rotate-90" : ""}`}
+            className={`h-3 ml-2 lg:hidden ${showFilter ? "rotate-90" : ""}`}
             alt=""
           />
         </p>
@@ -103,7 +127,7 @@ const Collection = () => {
         <div
           className={`border border-gray-300 pl-5 py-3 mt-6 ${
             showFilter ? "" : "hidden"
-          } sm:block`}
+          } lg:block`}
         >
           <p className="mb-3 text-sm font-medium">CATEGORIES</p>
           <div className="flex flex-col gap-2 text-sm font-light text-gray-700">
@@ -141,7 +165,7 @@ const Collection = () => {
         <div
           className={`border border-gray-300 pl-5 py-3 my-5 ${
             showFilter ? "" : "hidden"
-          } sm:block`}
+          } lg:block`}
         >
           <p className="mb-3 text-sm font-medium">TYPE</p>
           <div className="flex flex-col gap-2 text-sm font-light text-gray-700">
@@ -171,6 +195,7 @@ const Collection = () => {
             className="border border-gray-300 text-sm px-2 cursor-pointer focus:outline-none"
           >
             <option value="relavent">Sort by: Relavent</option>
+            <option value="best-seller">Sort by: Best Seller</option>
             <option value="low-high">Sort by: Low to High</option>
             <option value="high-low">Sort by: High to Low</option>
           </select>
@@ -194,7 +219,7 @@ const Collection = () => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 gap-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5  gap-2 gap-y-6">
             {loading
               ? Array.from({ length: 12 }).map((_, index) => (
                   <SkeletonCard key={index} />
@@ -208,6 +233,7 @@ const Collection = () => {
                     price={item.price}
                     reviews={item.reviews}
                     soldCount={item.soldCount}
+                    rank={item.rank}
                   />
                 ))}
           </div>

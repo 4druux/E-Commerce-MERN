@@ -9,7 +9,13 @@ const BestSeller = () => {
   const [loading, setLoading] = useState(true);
 
   const bestSeller = useMemo(() => {
-    return products.filter((item) => item.bestseller).slice(0, 5);
+    return products
+      .sort((a, b) => b.soldCount - a.soldCount) 
+      .slice(0, 5) 
+      .map((item, index) => ({
+        ...item,
+        rank: index + 1, 
+      }));
   }, [products]);
 
   useEffect(() => {
@@ -27,7 +33,7 @@ const BestSeller = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 gap-y-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 gap-y-6">
         {loading
           ? Array.from({ length: 5 }).map((_, index) => (
               <SkeletonCard key={index} />
@@ -41,6 +47,7 @@ const BestSeller = () => {
                 price={item.price}
                 reviews={item.reviews}
                 soldCount={item.soldCount}
+                rank={item.rank}
               />
             ))}
       </div>
