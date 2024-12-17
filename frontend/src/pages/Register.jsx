@@ -230,7 +230,7 @@ const Register = () => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        "https://ecommerce-backend-ebon-six.vercel.app/api/user/register",
+        "http://localhost:5001/api/user/register",
         {
           username,
           email,
@@ -259,7 +259,7 @@ const Register = () => {
 
     try {
       const response = await axios.post(
-        "https://ecommerce-backend-ebon-six.vercel.app/api/user/verify-otp",
+        "http://localhost:5001/api/user/verify-otp",
         {
           email,
           otp,
@@ -312,7 +312,7 @@ const Register = () => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        "https://ecommerce-backend-ebon-six.vercel.app/api/user/resend-otp",
+        "http://localhost:5001/api/user/resend-otp",
         { email }
       );
 

@@ -20,7 +20,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        "https://ecommerce-backend-ebon-six.vercel.app/api/user/login",
+        "http://localhost:5001/api/user/login",
         {
           email,
           password,

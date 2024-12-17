@@ -289,7 +289,7 @@ exports.getUserProfile = async (req, res) => {
 
 // Fungsi untuk mengirim email reset password
 const sendResetPasswordEmail = async (email, resetToken) => {
-  const resetLink = `https://ecommerce-frontend-beta-dusky.vercel.app/reset-password?token=${resetToken}`;
+  const resetLink = `http://localhost:5173/reset-password?token=${resetToken}`;
 
   const transporter = nodemailer.createTransport({
     service: "gmail",

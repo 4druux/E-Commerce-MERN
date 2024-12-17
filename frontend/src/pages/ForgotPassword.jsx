@@ -20,7 +20,7 @@ const ForgotPassword = () => {
 
     try {
       const response = await axios.post(
-        "https://ecommerce-backend-ebon-six.vercel.app/api/user/forgot-password",
+        "http://localhost:5001/api/user/forgot-password",
         { email }
       );
       setIsOverlay(true);

@@ -415,7 +415,7 @@ const checkoutCart = async (req, res) => {
       <tr>
         <td align="center" style="padding: 20px">
           <a
-            href="https://ecommerce-frontend-beta-dusky.vercel.app/orders"
+            href="http://localhost:5173/orders"
             style="
               background-color: #2c3e50;
               color: #ffffff;

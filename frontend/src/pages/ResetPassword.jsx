@@ -71,13 +71,10 @@ const ResetPassword = () => {
 
     try {
       setIsLoading(true);
-      await axios.post(
-        "https://ecommerce-backend-ebon-six.vercel.app/api/user/reset-password",
-        {
-          token,
-          newPassword,
-        }
-      );
+      await axios.post("http://localhost:5001/api/user/reset-password", {
+        token,
+        newPassword,
+      });
 
       setIsOverlay(true);
       SweetAlert({
