@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { ShoppingCart, CreditCard, Minus, Plus } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FaTimes } from "react-icons/fa";
 
 const ModalProduct = ({
   isModalCart,
@@ -18,20 +20,78 @@ const ModalProduct = ({
   handleAddToCart,
   handleCheckout,
   loadingCart,
-  openModal,
+  LoadingCheckout,
 }) => {
+  const [isCartModalVisible, setIsCartModalVisible] = useState(false);
+  const [isCheckoutModalVisible, setIsCheckoutModalVisible] = useState(false);
+
+  const [selectedImage, setSelectedImage] = useState("");
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+
+  const openImageModal = (image) => {
+    setSelectedImage(image);
+    setIsImageModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsImageModalOpen(false);
+  };
+
+  // Effect untuk Modal Cart
+  useEffect(() => {
+    if (isModalCart) {
+      // Sedikit delay untuk memastikan animasi berjalan
+      setTimeout(() => {
+        setIsCartModalVisible(true);
+      }, 50);
+    } else {
+      setIsCartModalVisible(false);
+    }
+  }, [isModalCart]);
+
+  // Effect untuk Modal Checkout
+  useEffect(() => {
+    if (isModalCheckOut) {
+      // Sedikit delay untuk memastikan animasi berjalan
+      setTimeout(() => {
+        setIsCheckoutModalVisible(true);
+      }, 50);
+    } else {
+      setIsCheckoutModalVisible(false);
+    }
+  }, [isModalCheckOut]);
+
+  // Fungsi untuk menutup modal dengan animasi
+  const handleCloseCartModal = () => {
+    setIsCartModalVisible(false);
+    setTimeout(() => {
+      toggleModalCart();
+    }, 300);
+  };
+
+  const handleCloseCheckoutModal = () => {
+    setIsCheckoutModalVisible(false);
+    setTimeout(() => {
+      toggleModalCheckOut();
+    }, 300);
+  };
+
   return (
     <>
       {/* Modal Cart */}
       {isModalCart && (
         <div
-          className={`fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${
-            loadingCart ? "bg-transparent" : "bg-black bg-opacity-50"
-          }`}
-          onClick={toggleModalCart}
+          className={`fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm transition-all duration-300 ease-in-out ${
+            loadingCart ? "bg-transparent" : "bg-black/30"
+          } ${isCartModalVisible ? "opacity-100" : "opacity-0"}`}
+          onClick={handleCloseCartModal}
         >
           <div
-            className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t rounded-t-xl border-gray-200 p-6"
+            className={`fixed bottom-0 left-0 right-0 z-50 bg-white border-t rounded-t-xl border-gray-200 p-6 transform transition-all duration-300 ease-in-out ${
+              isCartModalVisible
+                ? "translate-y-0 opacity-100"
+                : "translate-y-full opacity-0"
+            }`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Product Image */}
@@ -40,7 +100,7 @@ const ModalProduct = ({
                 src={productData.image}
                 alt={productData.name}
                 className="w-24 h-24 object-cover rounded-md"
-                onClick={openModal}
+                onClick={() => openImageModal(productData.image)}
               />
               <div className="ml-4">
                 <p className="text-md font-medium">{productData.name}</p>
@@ -123,13 +183,17 @@ const ModalProduct = ({
       {/* Modal Checkout */}
       {isModalCheckOut && (
         <div
-          className={`fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${
-            loadingCart ? "bg-transparent" : "bg-black bg-opacity-50"
-          }`}
-          onClick={toggleModalCheckOut}
+          className={`fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm transition-all duration-300 ease-in-out ${
+            LoadingCheckout ? "bg-transparent" : "bg-black/30"
+          } ${isCheckoutModalVisible ? "opacity-100" : "opacity-0"}`}
+          onClick={handleCloseCheckoutModal}
         >
           <div
-            className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t rounded-t-xl border-gray-200 p-6"
+            className={`fixed bottom-0 left-0 right-0 z-50 bg-white border-t rounded-t-xl border-gray-200 p-6 transform transition-all duration-300 ease-in-out ${
+              isCheckoutModalVisible
+                ? "translate-y-0 opacity-100"
+                : "translate-y-full opacity-0"
+            }`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Product Image */}
@@ -138,7 +202,7 @@ const ModalProduct = ({
                 src={productData.image}
                 alt={productData.name}
                 className="w-24 h-24 object-cover rounded-md"
-                onClick={openModal}
+                onClick={() => openImageModal(productData.image)}
               />
               <div className="ml-4">
                 <p className="text-md font-medium">{productData.name}</p>
@@ -217,6 +281,60 @@ const ModalProduct = ({
           </div>
         </div>
       )}
+
+      <AnimatePresence mode="wait">
+        {isImageModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/30 flex items-center justify-center z-[100] backdrop-blur-sm p-4"
+            onClick={closeModal}
+          >
+            <motion.div
+              initial={{
+                opacity: 0,
+                y: 100, // Mulai dari bawah
+                scale: 0.9,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0, // Naik ke posisi normal
+                scale: 1,
+              }}
+              exit={{
+                opacity: 0,
+                y: 100, // Turun ke bawah saat keluar
+                scale: 0.9,
+              }}
+              transition={{
+                type: "spring",
+                stiffness: 300,
+                damping: 15,
+                mass: 2, // Massa lebih ringan
+              }}
+              className="relative bg-white/25 rounded-2xl p-0 sm:p-3 backdrop-blur-xl shadow-2xl border border-white/20 
+              flex flex-col items-center justify-center max-w-[90%] max-h-[90%]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={selectedImage}
+                alt="Full Review View"
+                className="w-auto h-auto max-h-[80vh] max-w-[80vw] rounded-xl object-contain shadow-2xl 
+                transform transition-all duration-500 ease-in-out hover:scale-105"
+              />
+
+              <button
+                className="absolute top-3 right-3 bg-black/20 hover:bg-black/30 backdrop-blur-sm rounded-full p-2 
+                text-white transition-all duration-300 hover:rotate-180 hover:scale-110"
+                onClick={closeModal}
+              >
+                <FaTimes className="w-5 h-5" />
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };
@@ -243,7 +361,7 @@ ModalProduct.propTypes = {
   handleAddToCart: PropTypes.func.isRequired,
   handleCheckout: PropTypes.func.isRequired,
   loadingCart: PropTypes.bool.isRequired,
-  openModal: PropTypes.func.isRequired,
+  LoadingCheckout: PropTypes.bool.isRequired,
 };
 
 export default ModalProduct;

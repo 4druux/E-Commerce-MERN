@@ -24,7 +24,7 @@ const ModalCrop = ({ imageSrc, onCropComplete, onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] backdrop-blur-sm p-4 sm:p-6 md:p-8"
+      className="fixed inset-0 bg-black/30 flex items-center justify-center z-[100] backdrop-blur-sm transition-opacity duration-300 ease-in-out p-4 sm:p-6 md:p-8"
       onClick={onClose}
     >
       <div

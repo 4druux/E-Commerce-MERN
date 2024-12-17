@@ -156,12 +156,12 @@ const ModalAddToCart = ({ isOpen, onClose, productId }) => {
       <div
         id="modal-overlay"
         className={`fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${
-          loadingCart ? "bg-transparent" : "bg-black bg-opacity-50"
-        }`}
+          isModalVisible ? "opacity-100 visible" : "opacity-0 invisible"
+        } ${loadingCart ? "bg-transparent" : "bg-black/30"}`}
         onClick={handleClickOutside}
       >
         {loadingCart && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+          <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
             <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 border-t-4 border-t-white border-r-transparent border-b-white border-l-transparent rounded-full text-white"></div>
           </div>
         )}

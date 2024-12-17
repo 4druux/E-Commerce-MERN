@@ -67,54 +67,55 @@ input[type="number"] {
   top: 1rem;
 }
 
-/* custom sweet alert */
-.custom-title {
-  font-size: 30px !important;
-  font-weight: 700 !important;
-  color: #333 !important;
-  margin-bottom: 5px !important;
+/* Custom styles for the elegant Sweet Alert */
+.elegant-popup {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  padding: 30px;
 }
 
-.custom-confirm-button {
+/* Title Styling */
+.elegant-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #444;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+/* Message Styling */
+.elegant-message {
+  font-size: 18px;
+  color: #666;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.elegant-confirm-button {
+  background-color: #374151;
+  color: white;
   font-size: 16px;
   font-weight: 600;
-  padding: 10px 25px;
-  background-color: #333 !important;
-  color: #fff !important;
+  padding: 12px 30px;
   border: none;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: background-color 0.3s ease, transform 0.3s ease;
+  border-radius: 50px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.custom-confirm-button:hover {
-  background-color: #111111 !important;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+.elegant-confirm-button:hover {
+  transform: translateY(-3px);
 }
 
-.custom-popup {
-  width: 500px;
-  padding: 30px;
-  background-color: #ffffff;
-  border-radius: 10px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-  animation: popup-fadein 0.5s ease;
+.elegant-confirm-button:active {
+  transform: translateY(1px);
 }
 
-.custom-backdrop {
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(5px);
-}
-
-@keyframes popup-fadein {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
+@media (max-width: 400px) {
+  .elegant-popup {
+    width: 85%;
   }
 }
 

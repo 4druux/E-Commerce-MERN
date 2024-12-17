@@ -8,6 +8,7 @@ const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isOverlay, setIsOverlay] = useState(false);
   const [token, setToken] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -70,16 +71,21 @@ const ResetPassword = () => {
 
     try {
       setIsLoading(true);
-      await axios.post("https://ecommerce-frontend-beta-dusky.vercel.app/api/user/reset-password", {
-        token,
-        newPassword,
-      });
+      await axios.post(
+        "https://ecommerce-backend-ebon-six.vercel.app/api/user/reset-password",
+        {
+          token,
+          newPassword,
+        }
+      );
 
+      setIsOverlay(true);
       SweetAlert({
         title: "Success!",
         message: "Your password has been reset successfully.",
         icon: "success",
       });
+      setIsOverlay(false);
 
       navigate("/login");
     } catch (error) {
@@ -92,7 +98,7 @@ const ResetPassword = () => {
   };
 
   useEffect(() => {
-    if (isLoading) {
+    if (isLoading || isOverlay) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
@@ -101,24 +107,33 @@ const ResetPassword = () => {
     return () => {
       document.body.style.overflow = "unset";
     };
-  }, [isLoading]);
+  }, [isLoading, isOverlay]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
       {isLoading && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+        <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
           <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 border-t-4 border-t-white border-r-transparent border-b-white border-l-transparent rounded-full text-white"></div>
         </div>
       )}
+
+      {isOverlay && (
+        <div className="fixed inset-0 backdrop-blur-sm flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out"></div>
+      )}
+
       <Link to="/" className="my-8">
-        <img src={assets.forever_icon} alt="Atlas Icon" className="w-32 sm:w-40" />
+        <img
+          src={assets.forever_icon}
+          alt="Atlas Icon"
+          className="w-32 sm:w-40"
+        />
       </Link>
       <form
         onSubmit={handleResetPassword}
         className="flex flex-col items-center w-[90%] sm:max-w-md m-auto mt-14 gap-6 p-5 sm:p-8 bg-white shadow-xl rounded-xl transition-all duration-500 hover:shadow-2xl  border border-gray-100"
       >
         <div className="inline-flex items-center gap-2 mb-4">
-          <p className="prata-regular text-3xl">Reset Password</p>
+          <p className="prata-regular text-2xl">Reset Password</p>
           <hr className="border-none h-[1.5px] w-8 bg-gray-800" />
         </div>
         {errorMessage && (

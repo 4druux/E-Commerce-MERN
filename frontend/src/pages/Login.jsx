@@ -20,7 +20,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5173/api/user/login",
+        "https://ecommerce-frontend-beta-dusky.vercel.app/api/user/login",
         {
           email,
           password,
@@ -85,12 +85,16 @@ const Login = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen ">
       {isLoading && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+        <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
           <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 border-t-4 border-t-white border-r-transparent border-b-white border-l-transparent rounded-full text-white"></div>
         </div>
       )}
       <Link to="/" className="my-8">
-        <img src={assets.forever_icon} alt="Atlas Icon" className="w-32 sm:w-40 " />
+        <img
+          src={assets.forever_icon}
+          alt="Atlas Icon"
+          className="w-32 sm:w-40 "
+        />
       </Link>
       <form className="flex flex-col items-center w-[90%] sm:max-w-md m-auto mt-14 gap-6 p-5 sm:p-8 bg-white shadow-xl rounded-xl transition-all duration-500 hover:shadow-2xl  border border-gray-100">
         <div className="inline-flex items-center gap-2 mb-4">

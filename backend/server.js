@@ -9,11 +9,10 @@ const PORT = process.env.PORT || 5001;
 
 // Middleware
 app.use(
-  cors()
-    // {
-    // origin: "https://ecommerce-frontend-beta-dusky.vercel.app",
-    // credentials: true,
-    // }
+  cors({
+    origin: "https://ecommerce-frontend-beta-dusky.vercel.app",
+    credentials: true,
+  })
 );
 
 app.use(express.json({ limit: "10mb" }));

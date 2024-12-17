@@ -12,6 +12,7 @@ const ForgotPassword = () => {
   const [resendAttempts, setResendAttempts] = useState(0);
   const [intervalId, setIntervalId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isOverlay, setIsOverlay] = useState(false);
 
   const sendResetLinkHandler = async () => {
     setErrorMessage("");
@@ -19,9 +20,10 @@ const ForgotPassword = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5173/api/user/forgot-password",
+        "https://ecommerce-backend-ebon-six.vercel.app/api/user/forgot-password",
         { email }
       );
+      setIsOverlay(true);
       if (response.data.message) {
         SweetAlert({
           title: "Success!",
@@ -31,6 +33,7 @@ const ForgotPassword = () => {
           setIsEmailSent(true);
         startResendTimer();
       }
+      setIsOverlay(false);
     } catch (error) {
       if (error.response) {
         switch (error.response.status) {
@@ -91,7 +94,7 @@ const ForgotPassword = () => {
   }, [intervalId]);
 
   useEffect(() => {
-    if (isLoading) {
+    if (isLoading || isOverlay) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
@@ -100,16 +103,21 @@ const ForgotPassword = () => {
     return () => {
       document.body.style.overflow = "unset";
     };
-  }, [isLoading]);
+  }, [isLoading, isOverlay]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen">
       {isLoading && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+        <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
           <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 border-t-4 border-t-white border-r-transparent border-b-white border-l-transparent rounded-full text-white"></div>
         </div>
       )}
-      <Link to="/" className="mb-8 group">
+
+      {isOverlay && (
+        <div className="fixed inset-0 backdrop-blur-sm flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out"></div>
+      )}
+
+      <Link to="/" className="my-8 group">
         <img
           src={assets.forever_icon}
           alt="Atlas Icon"
@@ -117,7 +125,7 @@ const ForgotPassword = () => {
         />
       </Link>
 
-      <div className="w-[90%] sm:max-w-md p-8 bg-white shadow-xl rounded-xl transition-all duration-500 hover:shadow-2xl  border border-gray-100 ">
+      <form className="w-[90%] sm:max-w-md p-8 bg-white shadow-xl rounded-xl transition-all duration-500 hover:shadow-2xl  border border-gray-100 ">
         {/* Forgot Password Header */}
         <div className="text-center mb-8">
           <div className="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
@@ -304,7 +312,7 @@ const ForgotPassword = () => {
             <span>Back to Login</span>
           </Link>
         </div>
-      </div>
+      </form>
     </div>
   );
 };

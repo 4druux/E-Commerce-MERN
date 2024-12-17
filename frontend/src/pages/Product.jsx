@@ -11,7 +11,8 @@ import { ShopContext } from "../context/ShopContext";
 import RelatedProducts from "../components/RelatedProducts";
 import Reviews from "../components/Reviews";
 import { toast } from "react-toastify";
-import { Star, Minus, Plus, MessageCircle, ShoppingCart } from "lucide-react";
+import { Star, Minus, Plus, ShoppingCart, CreditCard } from "lucide-react";
+import { IoChatbubbleEllipsesOutline } from "react-icons/io5";
 import "react-toastify/dist/ReactToastify.css";
 import { formatPrice } from "../utils/formatPrice";
 import SkeletonProduct from "../components/SkeletonProduct";
@@ -41,7 +42,6 @@ const Product = () => {
   // Image Data Product
   const [image, setImage] = useState("");
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Selected decription dan review
   const [reviews, setReviews] = useState([]);
@@ -108,7 +108,7 @@ const Product = () => {
   };
 
   useEffect(() => {
-    if (isModalOpen) {
+    if (loadingCart || LoadingCheckout || isModalCart || isModalCheckOut) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
@@ -117,17 +117,7 @@ const Product = () => {
     return () => {
       document.body.style.overflow = "unset";
     };
-  }, [isModalOpen]);
-
-  // Fungsi untuk membuka modal img
-  const openModal = () => {
-    setIsModalOpen(true);
-  };
-
-  // Fungsi untuk menutup modal img
-  const closeModal = () => {
-    setIsModalOpen(false);
-  };
+  }, [loadingCart, LoadingCheckout, isModalCart, isModalCheckOut]);
 
   const toggleModalCart = () => {
     setIsModalCart(!isModalCart);
@@ -323,7 +313,7 @@ const Product = () => {
     const selectedItem = {
       _id: productData._id,
       size,
-      quantity: 1,
+      quantity: quantity,
       price: productData.price,
     };
     await addToCart(
@@ -383,7 +373,7 @@ const Product = () => {
                     <img
                       src={item}
                       alt={`Slide ${index + 1}`}
-                      className="w-full h-auto rounded-sm"
+                      className="w-full h-auto rounded-xl"
                     />
                   </SwiperSlide>
                 ))}
@@ -394,32 +384,11 @@ const Product = () => {
             <div className="hidden sm:hidden lg:block md:block">
               <img
                 src={image}
-                className="w-full h-full rounded-xl cursor-pointer object-cover"
+                className="w-full h-full rounded-xl object-cover"
                 alt="Selected Product"
-                onClick={openModal}
               />
             </div>
           </div>
-
-          {/* Modal for full-screen view */}
-          {isModalOpen && (
-            <div
-              className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
-              onClick={closeModal}
-            >
-              <img
-                src={image}
-                alt="Full View"
-                className="w-auto h-auto max-h-[90%] max-w-[90%] rounded-xl"
-              />
-              <button
-                className="absolute top-5 right-5 text-white text-3xl"
-                onClick={closeModal}
-              >
-                &times;
-              </button>
-            </div>
-          )}
         </div>
 
         <div className="flex-1 border-t-2 lg:border-none md:pt-0 transition-opacity ease-in duration-500 opacity-100">
@@ -492,39 +461,49 @@ const Product = () => {
             </div>
             <div className="flex gap-4 lg:gap-4 md:gap-4 lg:w-full md:w-full lg:max-w-[400px] md:max-w-[400px] lg:min-w-[300px] md:min-w-[300px]">
               <button
-                className="flex-1 border border-black px-4 py-3 text-sm active:bg-gray-700 hover:bg-black hover:text-white transition-all duration-500"
                 onClick={handleAddToCart}
-                disabled={loadingCart}
+                className={`flex-1 flex items-center justify-center shadow-md hover:shadow-lg space-x-2 py-3 px-4 text-sm transition-all duration-300 ${
+                  !size
+                    ? "bg-gray-100 text-gray-500"
+                    : "border border-black text-gray-800 hover:scale-[1.02] "
+                }`}
               >
-                {loadingCart ? "ADDING TO CART..." : "ADD TO CART"}
+                <ShoppingCart className="w-5 h-5" />
+                <span>{loadingCart ? "ADDING TO CART..." : "ADD TO CART"}</span>
               </button>
+
               <button
-                className="flex-1 bg-black text-white px-4 py-3 text-sm active:bg-gray-700"
                 onClick={handleCheckout}
+                className={`flex-1 flex items-center justify-center shadow-md hover:shadow-lg space-x-2 py-3 px-4 text-sm transition-all duration-300 ${
+                  !size
+                    ? "bg-gray-100 text-gray-500"
+                    : "bg-black text-white hover:scale-[1.02] active:bg-gray-700"
+                }`}
               >
-                CHECKOUT
+                <CreditCard className="w-5 h-5" />
+                <span>CHECKOUT</span>
               </button>
             </div>
           </div>
 
           {/* Mobile Fixed Bottom Navigation */}
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t md:hidden">
+          <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t md:hidden">
             <div className="flex items-center justify-between  mx-auto">
-              <button className="flex items-center justify-center px-6 py-4">
-                <MessageCircle className="w-6 h-6 text-gray-700" />
+              <button className="flex items-center justify-center px-6 py-5">
+                <IoChatbubbleEllipsesOutline className="w-6 h-6 text-gray-700" />
               </button>
 
               <div className="h-9 border-r border-gray-700"></div>
 
               <button
-                className="flex items-center justify-center px-6 py-4"
+                className="flex items-center justify-center px-6 py-5"
                 onClick={toggleModalCart}
               >
                 <ShoppingCart className="w-6 h-6 text-gray-700" />
               </button>
 
               <button
-                className="flex-1 bg-black text-white py-5 text-sm active:bg-gray-700"
+                className="flex-1 bg-black text-white py-6 text-sm active:bg-gray-700"
                 onClick={toggleModalCheckOut}
               >
                 CHECKOUT
@@ -560,7 +539,7 @@ const Product = () => {
         handleAddToCart={handleAddToCart}
         handleCheckout={handleCheckout}
         loadingCart={loadingCart}
-        openModal={openModal}
+        LoadingCheckout={LoadingCheckout}
       />
 
       <Reviews
@@ -576,7 +555,7 @@ const Product = () => {
       />
 
       {(loadingCart || LoadingCheckout) && (
-        <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+        <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
           <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
         </div>
       )}

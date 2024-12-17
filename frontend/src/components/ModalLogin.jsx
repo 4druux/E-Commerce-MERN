@@ -29,7 +29,7 @@ const ModalLogin = ({ onLoginSuccess }) => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5173/api/user/login",
+        "https://ecommerce-frontend-beta-dusky.vercel.app/api/user/login",
         { email, password }
       );
 
@@ -111,11 +111,11 @@ const ModalLogin = ({ onLoginSuccess }) => {
       id="modal-overlay"
       onClick={handleClickOutside}
       className={`fixed inset-0 flex items-center justify-center z-[100] backdrop-blur-sm transition-opacity duration-300 ease-in-out ${
-        isLoading ? "bg-transparent" : "bg-black bg-opacity-50"
+        isLoading ? "bg-transparent" : "bg-black/30"
       }`}
     >
       {isLoading && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+        <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
           <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 border-t-4 border-t-white border-r-transparent border-b-white border-l-transparent rounded-full text-white"></div>
         </div>
       )}

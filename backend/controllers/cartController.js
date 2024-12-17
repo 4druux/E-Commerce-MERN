@@ -243,175 +243,224 @@ const checkoutCart = async (req, res) => {
     const emailContent = `
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Confirmation - Vortex Series</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-            line-height: 1.6;
-        }
-        .container {
-            max-width: 700px;
-            margin: 30px auto;
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-        .header {
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order Confirmation - Forever Fashion</title>
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      background-color: #f4f4f4;
+      color: #333;
+    "
+  >
+    <table
+      align="center"
+      border="0"
+      cellpadding="0"
+      cellspacing="0"
+      width="600"
+      style="
+        margin: 20px auto;
+        background-color: #ffffff;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      "
+    >
+      <tr>
+        <td
+          align="center"
+          bgcolor="#2c3e50"
+          style="
+            padding: 20px 0;
             color: white;
-            padding: 20px;
+            font-size: 24px;
+            font-weight: bold;
+          "
+        >
+          Forever Fashion
+        </td>
+      </tr>
+
+      <tr>
+        <td style="padding: 20px; background-color: #f9fafb">
+          <h2
+            style="
+              margin: 0 0 10px;
+              font-size: 18px;
+              border-bottom: 2px solid #e0f2fe;
+              padding-bottom: 5px;
+              color: #2c3e50;
+            "
+          >
+            Order Summary
+          </h2>
+          <p style="margin: 5px 0"><strong>Order ID:</strong> #${order._id}</p>
+          <p style="margin: 5px 0">
+            <strong>Order Date:</strong> ${new Date().toLocaleDateString()}
+          </p>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="padding: 20px">
+          <h2
+            style="
+              margin: 0 0 10px;
+              font-size: 18px;
+              border-bottom: 2px solid #e0f2fe;
+              padding-bottom: 5px;
+              color: #2c3e50;
+            "
+          >
+            Your Items
+          </h2>
+          ${order.items
+            .map(
+              (item) => `
+          <table
+            width="100%"
+            style="
+              margin-bottom: 15px;
+              border-bottom: 1px solid #e5e7eb;
+              padding-bottom: 10px;
+            "
+          >
+            <tr>
+              <td width="20%" valign="top" style="padding-right: 10px">
+                <img
+                  src="${item.imageURL}"
+                  alt="${item.name}"
+                  width="60"
+                  height="60"
+                  style="border-radius: 4px; display: block"
+                />
+              </td>
+              <td valign="top" style="line-height: 1.4">
+                <strong>${item.name}</strong><br />
+                Size: ${item.size} | Quantity: ${item.quantity}
+              </td>
+              <td
+                align="right"
+                valign="top"
+                style="font-weight: bold; white-space: nowrap"
+              >
+                Rp ${(item.price * item.quantity).toLocaleString()}
+              </td>
+            </tr>
+          </table>
+          `
+            )
+            .join("")}
+        </td>
+      </tr>
+
+      <tr>
+        <td style="padding: 20px; background-color: #f9fafb">
+          <h2
+            style="
+              margin: 0 0 10px;
+              font-size: 18px;
+              border-bottom: 2px solid #e0f2fe;
+              padding-bottom: 5px;
+              color: #2c3e50;
+            "
+          >
+            Payment Summary
+          </h2>
+          <table width="100%">
+            <tr>
+              <td>Subtotal:</td>
+              <td align="right">Rp ${order.totalAmount.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td>Shipping:</td>
+              <td align="right">Rp 0</td>
+            </tr>
+            <tr>
+              <td style="font-weight: bold; font-size: 16px">Total:</td>
+              <td align="right" style="font-weight: bold; font-size: 16px">
+                Rp ${order.totalAmount.toLocaleString()}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <tr>
+        <td style="padding: 20px">
+          <h2
+            style="
+              margin: 0 0 10px;
+              font-size: 18px;
+              border-bottom: 2px solid #e0f2fe;
+              padding-bottom: 5px;
+              color: #2c3e50;
+            "
+          >
+            Shipping Address
+          </h2>
+          <p style="margin: 5px 0">${order.firstName} ${order.lastName}</p>
+          <p style="margin: 5px 0">${order.street}</p>
+          <p style="margin: 5px 0">
+            ${order.city}, ${order.state} ${order.zipCode}
+          </p>
+          <p style="margin: 5px 0">${order.country}</p>
+        </td>
+      </tr>
+
+      <tr>
+        <td align="center" style="padding: 20px">
+          <a
+            href="https://ecommerce-frontend-beta-dusky.vercel.app/orders"
+            style="
+              background-color: #2c3e50;
+              color: #ffffff;
+              text-decoration: none;
+              padding: 12px 25px;
+              font-weight: bold;
+              font-size: 16px;
+              border-radius: 4px;
+              display: inline-block;
+            "
+          >
+            View Order Details
+          </a>
+        </td>
+      </tr>
+
+      <tr>
+        <td
+          style="
+            padding: 10px 20px;
             text-align: center;
-        }
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 28px;
-            font-weight: bold;
-        }
-        .order-details {
-            padding: 20px;
-            background-color: #f9fafb;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        .section-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 10px;
-            padding-bottom: 5px;
-            border-bottom: 2px solid #3b82f6;
-        }
-        .order-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        .order-summary {
-            padding: 20px;
-            background-color: #ffffff;
-        }
-        .order-summary-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-        }
-        .total {
-            font-weight: bold;
-            font-size: 18px;
-            color: #1d4ed8;
-        }
-        .button {
-            display: block;
-            width: 200px;
-            margin: 20px auto;
-            padding: 12px 20px;
-            background-color: #3b82f6;
-            color: white;
-            text-align: center;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-        }
-        .footer {
-            text-align: center;
-            padding: 20px;
             background-color: #f9fafb;
             color: #6b7280;
             font-size: 12px;
-        }
-        .shipping-details, .payment-details {
-            padding: 20px;
-            background-color: #ffffff;
-            border-bottom: 1px solid #e5e7eb;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="header-content">
-                <div>
-                    <h1>Vortex Series</h1>
-                    <p>Order Confirmation</p>
-                </div>
-                <div style="text-align: right;">
-                    <p style="margin: 0;">Order #${order._id}</p>
-                    <p style="margin: 0; color: #e0f2fe;">${new Date().toLocaleDateString()}</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="order-details">
-            <p><strong>Order Number:</strong> #${order._id}</p>
-            <p><strong>Order Date:</strong> ${new Date().toLocaleDateString()}</p>
-        </div>
-
-        <div style="padding: 20px; background-color: #ffffff;">
-            <div class="section-title">Order Items</div>
-            ${order.items
-              .map(
-                (item) => `
-                <div class="order-item">
-                    <div style="flex-grow: 1;">
-                        <strong>${item.name}</strong><br>
-                        Size: ${item.size} | Quantity: ${item.quantity}
-                    </div>
-                    <div style="font-weight: bold;">Rp ${(
-                      item.price * item.quantity
-                    ).toLocaleString()}</div>
-                </div>`
-              )
-              .join("")}
-        </div>
-
-        <div class="shipping-details">
-            <div class="section-title">Shipping Address</div>
-            <p>${order.firstName} ${order.lastName}</p>
-            <p>${order.street}</p>
-            <p>${order.city}, ${order.state} ${order.zipCode}</p>
-            <p>${order.country}</p>
-        </div>
-
-        <div class="payment-details">
-            <div class="section-title">Payment Method</div>
-            <p>${order.paymentMethod}</p>
-        </div>
-
-        <div class="order-summary">
-            <div class="order-summary-row">
-                <span>Subtotal</span>
-                <span>Rp ${order.totalAmount.toLocaleString()}</span>
-            </div>
-            <div class="order-summary-row">
-                <span>Shipping</span>
-                <span>Rp 0</span>
-            </div>
-            <div class="order-summary-row total">
-                <span>Total</span>
-                <span>Rp ${order.totalAmount.toLocaleString()}</span>
-            </div>
-        </div>
-
-        <a href="https://ecommerce-frontend-beta-dusky.vercel.app/orders" class="button">View Order Details</a>
-
-        <div class="footer">
-            <p>&copy; 2024 Vortex Series. All rights reserved.</p>
-            <p>If you need assistance, please contact our support team.</p>
-        </div>
-    </div>
-</body>
+          "
+        >
+          <p style="margin: 5px 0">
+            &copy; 2024 Forever Fashion. All rights reserved.
+          </p>
+          <p style="margin: 5px 0">
+            Need help?
+            <a
+              href="mailto:vortexseries505@gmail.com"
+              style="color: #3b82f6; text-decoration: none"
+              >Contact Support</a
+            >
+          </p>
+          <p style="margin: 5px 0; font-style: italic; color: #9ca3af">
+            This email was sent automatically. Please do not reply to this
+            email.
+          </p>
+        </td>
+      </tr>
+    </table>
+  </body>
 </html>
 `;
 

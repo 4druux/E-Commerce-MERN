@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import SweetAlert from "../components/SweetAlert";
 import { assets } from "../assets/assets";
+import { SiGmail } from "react-icons/si";
 
 // Daftar username email yang tidak diperbolehkan
 const invalidUsernames = [
@@ -46,6 +47,7 @@ const Register = () => {
   const [progressWidth, setProgressWidth] = useState([0, 0, 0]);
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [isOverlay, setIsOverlay] = useState(false);
 
   // OTP states
   const [otp, setOtp] = useState("");
@@ -71,7 +73,7 @@ const Register = () => {
   }, [isOtpSent, errorMessage]);
 
   useEffect(() => {
-    if (isLoading) {
+    if (isLoading || isOverlay) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
@@ -80,7 +82,7 @@ const Register = () => {
     return () => {
       document.body.style.overflow = "unset";
     };
-  }, [isLoading]);
+  }, [isLoading, isOverlay]);
 
   // Fungsi untuk validasi format email
   const validateEmailFormat = useCallback((email) => {
@@ -228,7 +230,7 @@ const Register = () => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        "http://localhost:5173/api/user/register",
+        "https://ecommerce-backend-ebon-six.vercel.app/api/user/register",
         {
           username,
           email,
@@ -257,7 +259,7 @@ const Register = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5173/api/user/verify-otp",
+        "https://ecommerce-backend-ebon-six.vercel.app/api/user/verify-otp",
         {
           email,
           otp,
@@ -265,11 +267,13 @@ const Register = () => {
       );
 
       if (response.data.message) {
-        SweetAlert({
+        setIsOverlay(true);
+        await SweetAlert({
           title: "Success!",
           message: "Your email has been successfully verified.",
           icon: "success",
         });
+        setIsOverlay(false);
         setIsOtpVerified(true);
 
         // Reset all states
@@ -308,7 +312,7 @@ const Register = () => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        "http://localhost:5173/api/user/resend-otp",
+        "https://ecommerce-backend-ebon-six.vercel.app/api/user/resend-otp",
         { email }
       );
 
@@ -335,11 +339,13 @@ const Register = () => {
         // Save the interval ID
         setIntervalId(newIntervalId);
 
-        SweetAlert({
+        setIsOverlay(true);
+        await SweetAlert({
           title: "OTP Resent!",
           message: `New OTP has been sent to your email. ${response.data.remainingAttempts} attempts remaining.`,
           icon: "success",
         });
+        setIsOverlay(false);
       }
     } catch (error) {
       if (error.response?.status === 400) {
@@ -376,10 +382,19 @@ const Register = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         {isLoading && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+          <div
+            className={`fixed inset-0  flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out ${
+              isOverlay ? "bg-transparent" : "bg-black/30"
+            }`}
+          >
             <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 border-t-4 border-t-white border-r-transparent border-b-white border-l-transparent rounded-full text-white"></div>
           </div>
         )}
+
+        {isOverlay && (
+          <div className="fixed inset-0 backdrop-blur-sm flex justify-center items-center z-100 transition-opacity duration-300 ease-in-out "></div>
+        )}
+
         <Link to="/" className="mb-8 group">
           <img
             src={assets.forever_icon}
@@ -392,10 +407,9 @@ const Register = () => {
           {/* Email Verification Header */}
           <div className="text-center mb-8">
             <div className="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-              <img
-                src={assets.mail_icon}
+              <SiGmail
                 alt="Verification"
-                className="w-9 h-9 object-contain"
+                className="w-9 h-9 object-contain text-[#EA4335] "
               />
             </div>
             <h2 className="text-xl font-bold text-gray-800 mb-2">
@@ -594,7 +608,7 @@ const Register = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen ">
       {isLoading && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+        <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
           <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 border-t-4 border-t-white border-r-transparent border-b-white border-l-transparent rounded-full text-white"></div>
         </div>
       )}

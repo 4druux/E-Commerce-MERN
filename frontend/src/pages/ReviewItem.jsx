@@ -6,8 +6,11 @@ import Title from "../components/Title";
 import { formatPrice } from "../utils/formatPrice";
 import SkeletonReviewItem from "../components/SkeletonReviewItem";
 import SweetAlert from "../components/SweetAlert";
-import { ClipboardList, MessageCircleReply, Star, Trash2 } from "lucide-react";
+import { ClipboardList, Star, Trash2 } from "lucide-react";
+import { IoChatbubbleEllipsesOutline } from "react-icons/io5";
 import { useReviewFilter } from "../utils/useReviewFilter";
+import { motion, AnimatePresence } from "framer-motion";
+import { FaTimes } from "react-icons/fa";
 
 const ReviewItem = () => {
   const { fetchProductAndReviews, submitReplyToReview, deleteReview } =
@@ -23,11 +26,15 @@ const ReviewItem = () => {
   const sizeDropdownRef = useRef(null);
   const dateDropdownRef = useRef(null);
 
+  const [selectedReviewImage, setSelectedReviewImage] = useState("");
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+
   const navigate = useNavigate();
 
   const [isloading, setIsLoading] = useState(true);
   const [isReply, setIsReply] = useState();
   const [isDelete, setIsDelete] = useState();
+  const [isOverlay, setIsOverlay] = useState();
 
   const {
     selectedRatingFilter,
@@ -131,14 +138,28 @@ const ReviewItem = () => {
   };
 
   const handleDeleteReview = async (reviewId) => {
-    SweetAlert({
-      title: "Delete Confirmation",
-      message: "Are you sure you want to delete this review?",
-      icon: "warning",
-      buttons: true,
-      dangerMode: true,
-      closeOnClickOutside: true,
-    }).then(async (willDelete) => {
+    try {
+      // Nonaktifkan scroll saat SweetAlert muncul
+      document.body.style.overflow = "hidden";
+      setIsOverlay(true);
+
+      const willDelete = await SweetAlert({
+        title: "Delete Confirmation",
+        message: "Are you sure you want to delete this review?",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+        closeOnClickOutside: true,
+        // Callback tambahan untuk memastikan scroll diatur ulang
+        onOpen: () => {
+          document.body.style.overflow = "hidden";
+        },
+        onClose: () => {
+          document.body.style.overflow = "unset";
+          setIsOverlay(false);
+        },
+      });
+
       if (willDelete) {
         setIsDelete(true);
         await deleteReview(productId, reviewId);
@@ -147,15 +168,47 @@ const ReviewItem = () => {
         );
         setIsDelete(false);
 
-        SweetAlert({
+        await SweetAlert({
           title: "Review Deleted",
           message: "The review has been successfully deleted.",
           icon: "success",
           buttons: true,
           closeOnClickOutside: true,
+          // Pastikan scroll diatur ulang
+          onClose: () => {
+            document.body.style.overflow = "unset";
+            setIsOverlay(false);
+          },
         });
       }
-    });
+    } catch (error) {
+      console.error("Error in delete process:", error);
+    } finally {
+      // Terakhir, pastikan overlay dan scroll diatur
+      document.body.style.overflow = "unset";
+      setIsOverlay(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isReviewModalOpen || isDelete || isReply || isOverlay) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isReviewModalOpen, isDelete, isReply, isOverlay]);
+
+  const openReviewModal = (image) => {
+    setSelectedReviewImage(image);
+    setIsReviewModalOpen(true);
+  };
+
+  const closeReviewModal = () => {
+    setIsReviewModalOpen(false);
   };
 
   return (
@@ -172,49 +225,67 @@ const ReviewItem = () => {
         <>
           {/* Tampilkan data produk */}
           {product && (
-            <div
-              className="border p-6 rounded-lg shadow-md bg-white mb-8 transition-all duration-300 hover:shadow-2xl hover:border-gray-300 cursor-pointer"
-              onClick={() => navigate(-1)}
-            >
-              <div className="flex flex-col md:flex-row items-start">
-                {product.image && product.image.length > 0 && (
-                  <div className="w-full md:w-1/3 mb-4 md:mb-0 md:mr-6">
-                    <img
-                      src={product.image[0]}
-                      alt={product.name}
-                      className="w-full h-auto max-h-64 object-contain rounded-lg"
-                    />
-                  </div>
-                )}
-                <div className="flex flex-col space-y-4 w-full">
-                  <h1 className="font-medium text-2xl mt-2 line-clamp-2">
+            <div className="mb-8">
+              <div
+                className="bg-white cursor-pointer rounded-2xl shadow-md border border-gray-100 overflow-hidden transition-all 
+                duration-300 hover:shadow-xl flex flex-col md:flex-row "
+                onClick={() => navigate(-1)}
+              >
+                {/* Image Section - Ukuran lebih kecil */}
+                <div className="w-full md:w-1/3 p-4 flex items-center justify-center">
+                  <img
+                    src={product.image[0]}
+                    alt={product.name}
+                    className="max-w-full max-h-[300px] object-cover rounded-lg shadow-md" // batasi tingginya
+                  />
+                </div>
+
+                {/* Product Information */}
+                <div className="p-6 w-full md:w-2/3 flex flex-col mb-4">
+                  <h1 className="text-xl font-medium text-gray-900 mb-4 ">
                     {product.name}
                   </h1>
-                  <div className="flex items-center gap-1 mt-2">
-                    <div className="flex items-center text-orange-500">
-                      <Star fill="currentColor" className="w-4 h-4" />
-                      <span className="ml-1 text-gray-700 text-base">
-                        {averageRating.toFixed(1)}
-                      </span>
+
+                  {/* Rating Section */}
+                  <div className="flex items-center mb-4">
+                    <div className="flex items-center space-x-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          fill="currentColor"
+                          className={`w-5 h-5 ${
+                            star <= Math.round(averageRating)
+                              ? "text-orange-500"
+                              : "text-orange-300 opacity-60"
+                          }`}
+                        />
+                      ))}
                     </div>
-                    <span className="text-gray-500 text-sm">
-                      ({reviews.length})
+                    <span className="text-gray-600 ml-2 text-sm">
+                      {averageRating.toFixed(1)} ({reviews.length} reviews)
                     </span>
                   </div>
-                  <p className="text-gray-600 text-sm md:text-base line-clamp-2">
-                    {product.description}
-                  </p>
-                  <div className="flex flex-col space-y-2 mt-2 text-sm md:text-base">
-                    <p className="text-gray-700">
-                      <strong>Category:</strong> {product.category}
-                    </p>
-                    <p className="text-gray-700">
-                      <strong>Sub Category:</strong> {product.subCategory}
-                    </p>
-                    <p className="text-gray-700">
-                      <strong>Price:</strong> Rp
-                      {formatPrice(product.price || 0)}
-                    </p>
+
+                  {/* Product Details - Grid Layout */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-gray-100 pt-4">
+                    {[
+                      { label: "Category", value: product.category },
+                      { label: "Sub Category", value: product.subCategory },
+                      {
+                        label: "Price",
+                        value: `Rp${formatPrice(product.price || 0)}`,
+                      },
+                      { label: "Sizes", value: product.sizes.join(", ") },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="flex flex-col">
+                        <p className="text-gray-800 font-medium text-sm">
+                          {label}:
+                        </p>
+                        <p className="text-gray-500 text-base truncate">
+                          {value}
+                        </p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -515,7 +586,7 @@ const ReviewItem = () => {
               {filteredReviews.map((review) => (
                 <div
                   key={review._id}
-                  className="border p-6 rounded-md shadow-lg bg-white flex flex-col justify-between items-start transition-all duration-300 hover:shadow-xl relative"
+                  className="border p-6 rounded-2xl shadow-lg bg-white flex flex-col justify-between items-start transition-all duration-300 hover:shadow-xl relative"
                 >
                   <div className="flex flex-col space-y-2 w-full">
                     <p className="font-semibold text-gray-800">
@@ -542,31 +613,49 @@ const ReviewItem = () => {
                       <strong>Size:</strong> {review.size}
                     </p>
 
-                    <p className="text-sm text-gray-600">{review.reviewText}</p>
+                    <div
+                      className="text-gray-800"
+                      style={{
+                        whiteSpace: "pre-wrap",
+                        wordWrap: "break-word",
+                        wordBreak: "break-all",
+                      }}
+                    >
+                      {review.reviewImages &&
+                        review.reviewImages.length > 0 && (
+                          <div className="w-full overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                            <div className="flex gap-2 mt-2 pb-2 min-w-full">
+                              {review.reviewImages.map((img, imgIndex) => (
+                                <img
+                                  key={imgIndex}
+                                  src={img}
+                                  alt={`Review Image ${imgIndex + 1}`}
+                                  className="flex-shrink-0 w-24 h-24 object-cover rounded cursor-pointer transition-all duration-500 brightness-90 shadow-md 
+                            hover:scale-110 hover:shadow-xl hover:brightness-100 active:scale-95"
+                                  onClick={() => openReviewModal(img)}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
-                    {review.reviewImages && review.reviewImages.length > 0 && (
-                      <div className="flex gap-2 mt-2">
-                        {review.reviewImages.map((img, imgIndex) => (
-                          <img
-                            key={imgIndex}
-                            src={img}
-                            alt={`Review Image ${imgIndex + 1}`}
-                            className="w-24 h-24 object-cover rounded-md shadow-md"
-                          />
-                        ))}
-                      </div>
-                    )}
+                      {review.reviewText.split("\n").map((paragraph, index) => (
+                        <p key={index} className="mb-2">
+                          {paragraph}
+                        </p>
+                      ))}
+                    </div>
 
                     {review.adminReply && (
-                      <div className="mt-4 p-4 bg-gray-100 rounded-md shadow-inner">
+                      <div className="mt-4 p-4 bg-gray-50 rounded-2xl shadow-inner">
                         <p className="text-gray-800 font-semibold">
-                          Balasan Admin:
+                          admin response
                         </p>
                         <p className="text-gray-700">{review.adminReply}</p>
                       </div>
                     )}
 
-                    <p className="text-gray-400 text-xs mt-2">
+                    <p className="text-gray-400 text-xs">
                       {new Intl.DateTimeFormat("en-GB", {
                         day: "2-digit",
                         month: "short",
@@ -575,18 +664,28 @@ const ReviewItem = () => {
                     </p>
 
                     {currentReplyId === review._id ? (
-                      <div className="mt-4 flex flex-col space-y-2">
+                      <div
+                        className="mt-4 flex flex-col space-y-4"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <textarea
                           value={replyText}
                           onChange={(e) => setReplyText(e.target.value)}
                           placeholder="Tulis balasan admin..."
-                          className="border p-2 rounded-md shadow-sm"
+                          className="border p-2 rounded-xl shadow-sm focus:outline-gray-800 transition duration-300 resize-none h-32 
+                           placeholder:text-gray-400"
                         />
+
                         <button
                           onClick={() => handleReplySubmit(review._id)}
-                          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-all"
+                          disabled={!replyText.trim()}
+                          className={`w-full flex items-center justify-center shadow-md hover:shadow-lg space-x-2 py-3 rounded-full ${
+                            replyText.trim()
+                              ? "bg-gray-900 text-white transition-all duration-300"
+                              : "bg-gray-100 text-gray-500 cursor-not-allowed"
+                          }`}
                         >
-                          Kirim Balasan
+                          send reply
                         </button>
                       </div>
                     ) : null}
@@ -594,25 +693,25 @@ const ReviewItem = () => {
 
                   <div className="flex justify-end items-center space-x-2 mt-4 w-full">
                     <button
-                      className="border border-black px-4 py-2 rounded-md hover:bg-black transition-all duration-500 group"
+                      className="p-2 rounded-full group bg-gray-100 border border-gray-200 hover:bg-gray-200 shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-in-out"
                       onClick={() =>
                         currentReplyId === review._id
                           ? setCurrentReplyId(null)
                           : setCurrentReplyId(review._id)
                       }
                     >
-                      <MessageCircleReply
+                      <IoChatbubbleEllipsesOutline
                         alt="Chat"
-                        className="w-6 h-6 filter group-hover:invert"
+                        className="w-7 h-7 text-gray-600 group-hover:text-gray-800"
                       />
                     </button>
 
                     <button
                       onClick={() => handleDeleteReview(review._id)}
-                      className="bg-black px-4 py-2 rounded-md active:bg-gray-800 transition-all duration-300"
+                      className="p-2 rounded-full group bg-red-50 border border-red-200 hover:bg-red-100 shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-in-out"
                     >
                       <Trash2
-                        className="w-6 h-6 filter invert contrast-200 brightness-200"
+                        className="w-6 h-6 text-red-300 group-hover:text-red-500"
                         alt="Delete"
                       />
                     </button>
@@ -621,14 +720,72 @@ const ReviewItem = () => {
               ))}
             </div>
           )}
+
+          <AnimatePresence mode="wait">
+            {isReviewModalOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/30 flex items-center justify-center z-[100] backdrop-blur-sm p-4"
+                onClick={closeReviewModal}
+              >
+                <motion.div
+                  initial={{
+                    opacity: 0,
+                    y: 100, // Mulai dari bawah
+                    scale: 0.9,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0, // Naik ke posisi normal
+                    scale: 1,
+                  }}
+                  exit={{
+                    opacity: 0,
+                    y: 100, // Turun ke bawah saat keluar
+                    scale: 0.9,
+                  }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 15,
+                    mass: 2, // Massa lebih ringan
+                  }}
+                  className="relative bg-white/25 rounded-2xl p-0 sm:p-3 backdrop-blur-xl shadow-2xl border border-white/20 
+              flex flex-col items-center justify-center max-w-[90%] max-h-[90%]"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <img
+                    src={selectedReviewImage}
+                    alt="Full Review View"
+                    className="w-auto h-auto max-h-[80vh] max-w-[80vw] rounded-xl object-contain shadow-2xl 
+                transform transition-all duration-500 ease-in-out hover:scale-105"
+                  />
+
+                  <button
+                    className="absolute top-3 right-3 bg-black/20 hover:bg-black/30 backdrop-blur-sm rounded-full p-2 
+                text-white transition-all duration-300 hover:rotate-180 hover:scale-110"
+                    onClick={closeReviewModal}
+                  >
+                    <FaTimes className="w-5 h-5" />
+                  </button>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </>
       )}
       {isReply ||
         (isDelete && (
-          <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+          <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-[100] transition-opacity duration-300 ease-in-out">
             <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
           </div>
         ))}
+
+      {isOverlay && (
+        <div className="fixed inset-0 flex justify-center items-center z-50 backdrop-blur-sm transition-opacity duration-300 ease-in-out"></div>
+      )}
     </div>
   );
 };

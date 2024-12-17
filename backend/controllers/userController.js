@@ -17,32 +17,81 @@ const sendOTPEmail = async (email, otp) => {
 
   // Read the HTML template
   const htmlTemplate = `  
-  <!DOCTYPE html>  
-  <html lang="en">  
-  <head>  
-      <meta charset="UTF-8">  
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">  
-      <title>Your OTP Code</title>  
-      <style>  
-          body { font-family: Arial, sans-serif; }  
-      </style>  
-  </head>  
-  <body>  
-      <div style="max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f4f4f4;">  
-          <div style="background-color: white; padding: 30px; border-radius: 10px; text-align: center;">  
-              <h1 style="color: #3B82F6;">Verify Your Email</h1>  
-              <p>Use the following One-Time Password to complete your verification:</p>  
-              
-              <div style="background-color: #EFF6FF; border-left: 4px solid #3B82F6; padding: 15px; margin: 20px 0;">  
-                  <h2 style="color: #3B82F6; font-size: 36px; margin: 0;">${otp}</h2>  
-                  <p style="color: #666;">This code will expire in 5 minutes</p>  
-              </div>  
-              
-              <p style="color: #888; font-size: 14px;">Do not share this code with anyone</p>  
-          </div>  
-      </div>  
-  </body>  
-  </html>  
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your OTP Code</title>
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f4f7fb;
+    "
+  >
+    <div
+      style="
+        max-width: 550px;
+        margin: 40px auto;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+      "
+    >
+      <div style="text-align: center; color: #2c3e50">
+        <h1 style="margin: 0; font-size: 24px">Verify Your Email</h1>
+        <p style="margin-top: 10px; color: #333; font-size: 16px">
+          Use the following One-Time Password to complete your verification:
+        </p>
+      </div>
+
+      <div
+        style="
+          background-color: #f1f9ff;
+          border-left: 5px solid #2c3e50;
+          padding: 20px;
+          margin-top: 20px;
+          text-align: center;
+        "
+      >
+        <div style="font-size: 32px; color: #2c3e50; font-weight: bold">
+          ${otp}
+        </div>
+        <p style="color: #777; font-size: 14px; margin-top: 10px">
+          This code will expire in 5 minutes
+        </p>
+      </div>
+
+      <div
+        style="
+          text-align: center;
+          margin-top: 40px;
+          color: #888;
+          font-size: 12px;
+        "
+      >
+        <p style="margin: 5px 0; font-style: italic">
+          This email was sent automatically. Please do not reply to this email.
+        </p>
+        <p style="margin: 5px 0; font-style: italic">
+          If you did not request this, please ignore this email.
+        </p>
+        <p style="margin: 5px 0">
+          Need help?
+          <a
+            href="mailto:vortexseries505@gmail.com"
+            style="color: #3b82f6; text-decoration: none"
+            >Contact Support</a
+          >
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
   `;
 
   const mailOptions = {
@@ -240,7 +289,7 @@ exports.getUserProfile = async (req, res) => {
 
 // Fungsi untuk mengirim email reset password
 const sendResetPasswordEmail = async (email, resetToken) => {
-  const resetLink = `http://localhost:5173/reset-password?token=${resetToken}`;
+  const resetLink = `https://ecommerce-frontend-beta-dusky.vercel.app/reset-password?token=${resetToken}`;
 
   const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -251,35 +300,98 @@ const sendResetPasswordEmail = async (email, resetToken) => {
   });
 
   const htmlTemplate = `  
-  <!DOCTYPE html>  
-  <html lang="en">  
-  <head>  
-      <meta charset="UTF-8">  
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">  
-      <title>Password Reset</title>  
-      <style>  
-          body { font-family: Arial, sans-serif; }  
-      </style>  
-  </head>  
-  <body>  
-      <div style="max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f4f4f4;">  
-          <div style="background-color: white; padding: 30px; border-radius: 10px; text-align: center;">  
-              <h1 style="color: #3B82F6;">Password Reset Request</h1>  
-              <p>You have requested to reset your password. Click the button below to reset:</p>  
-              
-              <div style="margin: 20px 0;">  
-                  <a href="${resetLink}" style="background-color: #3B82F6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">  
-                      Reset Password  
-                  </a>  
-              </div>  
-              
-              <p style="color: #888; font-size: 14px;">  
-                This link will expire in 15 minutes. If you did not request a password reset, please ignore this email.  
-              </p>  
-          </div>  
-      </div>  
-  </body>  
-  </html>  
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Password Reset</title>
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f4f7fb;
+    "
+  >
+    <div
+      style="
+        max-width: 600px;
+        margin: 40px auto;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+      "
+    >
+      <div style="text-align: center; color: #2c3e50">
+        <h1 style="margin: 0; font-size: 24px">Password Reset Request</h1>
+        <p style="margin-top: 10px; color: #333; font-size: 16px">
+          You have requested to reset your password. Click the button below to
+          reset:
+        </p>
+      </div>
+
+      <div
+        style="
+          background-color: #f1f9ff;
+          border-left: 5px solid #2c3e50;
+          padding: 40px;
+          margin-top: 20px;
+          text-align: center;
+        "
+      >
+        <a
+          href="${resetLink}"
+          style="
+            background-color: #2c3e50;
+            padding: 15px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            color: #ffffff;
+            font-size: 16px;
+            display: inline-block;
+            text-align: center;
+          "
+        >
+          Reset Password
+        </a>
+      </div>
+
+      <div style="text-align: center; margin-top: 20px">
+        <p style="color: #777; font-size: 14px; margin-top: 10px">
+          This link will expire in 15 minutes. If you did not request a password
+          reset, please ignore this email.
+        </p>
+      </div>
+
+      <div
+        style="
+          text-align: center;
+          margin-top: 40px;
+          color: #888;
+          font-size: 12px;
+        "
+      >
+        <p style="margin: 5px 0; font-style: italic">
+          This email was sent automatically. Please do not reply to this email.
+        </p>
+        <p style="margin: 5px 0; font-style: italic">
+          If you did not request a password reset, please ignore this email.
+        </p>
+        <p style="margin: 5px 0">
+          Need help?
+          <a
+            href="mailto:vortexseries505@gmail.com"
+            style="color: #3b82f6; text-decoration: none"
+            >Contact Support</a
+          >
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
   `;
 
   const mailOptions = {
@@ -303,18 +415,32 @@ exports.forgotPassword = async (req, res) => {
     if (!user) {
       return res
         .status(404)
-        .json({ message: "No account found with this email" });
+        .json({ message: "No account found with this email address." });
     }
 
-    // Cek apakah sudah ada reset token yang belum expired
-    if (user.resetPasswordToken && user.resetPasswordExpires > Date.now()) {
-      return res
-        .status(429)
-        .json({
-          message:
-            "A reset link has already been sent. Please try again later.",
-        });
+    // Inisialisasi reset password attempts jika belum ada
+    if (!user.resetPasswordAttempts || !user.resetPasswordFirstAttempt) {
+      user.resetPasswordAttempts = 0;
+      user.resetPasswordFirstAttempt = Date.now();
     }
+
+    // Reset attempts jika sudah lebih dari 15 menit
+    const timeSinceFirstAttempt = Date.now() - user.resetPasswordFirstAttempt;
+    if (timeSinceFirstAttempt > 15 * 60 * 1000) {
+      // 15 menit
+      user.resetPasswordAttempts = 0;
+      user.resetPasswordFirstAttempt = Date.now();
+    }
+
+    // Cek jumlah percobaan
+    if (user.resetPasswordAttempts >= 3) {
+      return res.status(429).json({
+        message: "Maximum reset attempts reached. Please try again later.",
+      });
+    }
+
+    // Tambah jumlah percobaan
+    user.resetPasswordAttempts += 1;
 
     // Generate reset token
     const resetToken = crypto.randomBytes(32).toString("hex");
@@ -323,7 +449,7 @@ exports.forgotPassword = async (req, res) => {
       .update(resetToken)
       .digest("hex");
 
-    // Simpan reset token dan waktu expired di database
+    // Simpan token dan expired time
     user.resetPasswordToken = resetTokenHash;
     user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 menit
     await user.save();
@@ -331,10 +457,13 @@ exports.forgotPassword = async (req, res) => {
     // Kirim email reset password
     await sendResetPasswordEmail(email, resetToken);
 
-    res.status(200).json({ message: "Password reset link sent successfully" });
+    res.status(200).json({
+      message: "Password reset link sent successfully.",
+      remainingAttempts: 3 - user.resetPasswordAttempts,
+    });
   } catch (error) {
     console.error("Forgot password error:", error);
-    res.status(500).json({ message: "Failed to process password reset" });
+    res.status(500).json({ message: "Failed to process password reset." });
   }
 };
 
