@@ -6,6 +6,7 @@ import { formatPrice } from "../utils/formatPrice";
 import { useLocation } from "react-router-dom";
 import CartItem from "../components/CartItem";
 import SkeletonCart from "../components/SkeletonCart";
+import { ShoppingCart } from "lucide-react";
 
 const Cart = () => {
   const location = useLocation();
@@ -24,11 +25,12 @@ const Cart = () => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [showDelete, setShowDelete] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const [isLoading, setIsLoading] = useState(true); 
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUpdate, setIsUpdate] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
-    fetchCartData(token).then(() => setIsLoading(false)); 
+    fetchCartData(token).then(() => setIsLoading(false));
   }, [fetchCartData]);
 
   useEffect(() => {
@@ -52,6 +54,7 @@ const Cart = () => {
 
   const handleQuantityChange = async (itemId, size, newQuantity) => {
     if (newQuantity >= 1) {
+      setIsUpdate(true);
       await updateQuantity(itemId, size, newQuantity);
       setCartItems((prevData) =>
         prevData.map((item) =>
@@ -68,6 +71,7 @@ const Cart = () => {
             : selectedItem
         )
       );
+      setIsUpdate(false);
     }
   };
 
@@ -104,6 +108,7 @@ const Cart = () => {
   };
 
   const handleRemoveItem = async (itemId, size) => {
+    setIsUpdate(true);
     await removeFromCart(itemId, size);
     setCartItems((prevData) =>
       prevData.filter((item) => item.productId !== itemId || item.size !== size)
@@ -115,6 +120,7 @@ const Cart = () => {
           selectedItem._id !== itemId || selectedItem.size !== size
       )
     );
+    setIsUpdate(false);
   };
 
   const handleIncrement = (itemId, size, currentQuantity) => {
@@ -126,6 +132,17 @@ const Cart = () => {
       handleQuantityChange(itemId, size, currentQuantity - 1);
     }
   };
+
+  useEffect(() => {
+    if (isUpdate) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isUpdate]);
 
   if (isLoading) {
     return (
@@ -149,7 +166,10 @@ const Cart = () => {
       </div>
 
       {cartItems.length === 0 ? (
-        <p className="text-center text-gray-500 my-10">No items available</p>
+        <div className="flex items-center space-x-3 justify-center my-20">
+          <ShoppingCart className="text-gray-700 w-14 h-14" />
+          <p className="text-gray-700  text-lg">No items available</p>
+        </div>
       ) : (
         <div>
           {cartItems.map((item, index) => {
@@ -204,6 +224,12 @@ const Cart = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {isUpdate && (
+        <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+          <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 border-t-4 border-t-white border-r-transparent border-b-white border-l-transparent rounded-full text-white"></div>
         </div>
       )}
     </div>

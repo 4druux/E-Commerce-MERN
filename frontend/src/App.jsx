@@ -16,8 +16,12 @@ import "react-toastify/dist/ReactToastify.css";
 import UserOrders from "./pages/UserOrders";
 
 // Import halaman UserLogin dan AdminLogin
-import UserLogin from "./pages/UserLogin";
-import AdminLogin from "./pages/AdminLogin";
+// import UserLogin from "./pages/UserLogin";
+// import AdminLogin from "./pages/AdminLogin";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import ResetPassword from "./pages/ResetPassword";
+import ForgotPassword from "./pages/ForgotPassword";
 
 // Panel Admin
 import AdminPanel from "./components/AdminPanel";
@@ -30,12 +34,21 @@ import Dashboard from "./pages/Dashboard";
 
 const App = () => {
   const location = useLocation();
+
   const isAdmin = location.pathname.startsWith("/admin");
+
+  const loginRoutes = [
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/reset-password",
+  ];
+  const isLoginPage = loginRoutes.includes(location.pathname);
 
   return (
     <div className="px-4 sm:px-[6vw] md:px-[9vw] lg:px-[10vw]">
       <ToastContainer />
-      {!isAdmin && <Navbar />}
+      {!isAdmin && !isLoginPage && <Navbar />}
       {!isAdmin && <SearchBar />}
       <Routes>
         {/* Routes untuk bagian user */}
@@ -45,16 +58,18 @@ const App = () => {
         <Route path="/contact" element={<Contact />} />
         <Route path="/product/:productId" element={<Product />} />
         <Route path="/cart" element={<Cart />} />
-        <Route path="/login" element={<UserLogin />} />
-        <Route path="/register" element={<UserLogin />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/check-out" element={<CheckOut />} />
         <Route path="/payment" element={<Payment />} />
         <Route path="/orders" element={<UserOrders />} />{" "}
         {/* Ubah import di sini */}
         {/* Routes untuk bagian admin */}
-        <Route path="/admin/login" element={<AdminLogin />} />{" "}
+        {/* <Route path="/admin/login" element={<AdminLogin />} />{" "} */}
         {/* Login untuk Admin */}
-        <Route path="/admin/register" element={<AdminLogin />} />{" "}
+        {/* <Route path="/admin/register" element={<AdminLogin />} />{" "} */}
         {/* Register untuk Admin */}
         <Route path="/admin" element={<AdminPanel />}>
           <Route path="dashboard" element={<Dashboard />} />

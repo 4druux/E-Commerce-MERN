@@ -59,7 +59,7 @@ import hero_img from "./hero_img.png";
 import cart_icon from "./cart_icon.png";
 import bin_icon from "./bin_icon.png";
 import dropdown_icon from "./dropdown_icon.png";
-// import exchange_icon from "./exchange_icon.png";
+import exchange_icon from "./exchange_icon.png";
 import edit_icon from "./edit-text.png";
 import profile_icon from "./profile_icon.png";
 import quality_icon from "./quality_icon.png";
@@ -91,13 +91,15 @@ import indomart_icon from "./indomart.png";
 import alfamart_icon from "./alfamart.png";
 import dashboard_icon from "./statisctics.png";
 import inform_icon from "./i.png";
+import forever_icon from "./forever.png";
+import forever_logo from "./forever_logo.png";
 
 export const assets = {
   logo,
   hero_img,
   cart_icon,
   dropdown_icon,
-  // exchange_icon,
+  exchange_icon,
   edit_icon,
   profile_icon,
   quality_icon,
@@ -130,6 +132,8 @@ export const assets = {
   alfamart_icon,
   dashboard_icon,
   inform_icon,
+  forever_icon,
+  forever_logo,
 };
 
 export const products = [

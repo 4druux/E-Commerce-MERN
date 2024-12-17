@@ -4,7 +4,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import Title from "../components/Title";
-import { assets } from "../assets/assets";
+
 import "react-toastify/dist/ReactToastify.css";
 import { formatPrice, unformatPrice } from "../utils/formatPrice";
 
@@ -13,7 +13,8 @@ import { Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
 
-import CropModal from "../components/CropModal";
+import CropModal from "../components/ModalCrop";
+import { CloudUpload, Plus, Trash2, UploadCloud } from "lucide-react";
 
 const AddItem = () => {
   const [images, setImages] = useState([null]);
@@ -160,11 +161,14 @@ const AddItem = () => {
         .map((image) => convertToBase64(image));
       const imageUrls = await Promise.all(imagePromises);
 
-      await axios.post("http://localhost:5173/api/products/add", {
-        ...formData,
-        price: unformatPrice(formData.price),
-        image: imageUrls,
-      });
+      await axios.post(
+        "https://ecommerce-backend-ebon-six.vercel.app/api/products/add",
+        {
+          ...formData,
+          price: unformatPrice(formData.price),
+          image: imageUrls,
+        }
+      );
 
       toast.success("Product added successfully!", {
         position: "top-right",
@@ -227,7 +231,7 @@ const AddItem = () => {
         <Title text1={"ADD"} text2={"ITEM"} />
       </div>
       <form
-        className="space-y-4 bg-white p-6 shadow-md rounded-md"
+        className="bg-white border p-6 mb-6 shadow-xl rounded-2xl"
         onSubmit={handleSubmit}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -252,35 +256,32 @@ const AddItem = () => {
                 >
                   {imageURLs.map((url, index) => (
                     <SwiperSlide key={index} className="cursor-pointer">
-                      <div className="relative w-full h-[400px] flex items-center justify-center bg-gray-200">
+                      <div
+                        className={`relative rounded-xl w-full h-[300px] flex items-center justify-center bg-gray-50 ${
+                          url
+                            ? "border-none"
+                            : "border-2 border-dashed border-gray-300"
+                        } `}
+                      >
                         {url ? (
                           <>
                             <img
                               src={url}
                               alt={`Preview ${index + 1}`}
-                              className="object-cover w-full h-full"
+                              className="object-cover w-full h-full rounded-xl"
                             />
-                            <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+                            <div className="absolute inset-0 bg-black/50  rounded-xl flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
                               <button
                                 type="button"
                                 onClick={() => handleRemoveImage(index)}
-                                className="w-8 h-8"
                               >
-                                <img
-                                  src={assets.recycle_bin}
-                                  alt="Remove"
-                                  className="w-full h-full"
-                                />
+                                <Trash2 className="w-8 h-8 text-white hover:scale-125 transition-all duration-300 ease-in-out" />
                               </button>
                             </div>
                           </>
                         ) : (
-                          <label className="absolute inset-0 flex items-center justify-center bg-gray-200 cursor-pointer">
-                            <img
-                              src={assets.upload_area}
-                              alt="Upload area"
-                              className="w-24 h-24 bg-gray-300 rounded-full object-cover"
-                            />
+                          <label className="absolute rounded-xl inset-0 flex items-center justify-center bg-gray-50 cursor-pointer">
+                            <UploadCloud className="w-12 h-12 text-gray-400" />
                             <input
                               type="file"
                               className="hidden"
@@ -295,13 +296,15 @@ const AddItem = () => {
                   ))}
                   {images.length < 5 && (
                     <SwiperSlide>
-                      <div className="relative w-full h-[400px] flex items-center justify-center border border-gray-300 bg-gray-100 cursor-pointer">
+                      <div className="relative w-full rounded-xl h-[300px] flex items-center justify-center border-2 border-dashed border-gray-300 bg-gray-50 cursor-pointer">
                         <button
                           type="button"
                           onClick={handleAddImage}
                           className="flex items-center justify-center w-full h-full"
                         >
-                          <span className="text-5xl">+</span>
+                          <span>
+                            <Plus className="w-10 h-10 text-gray-400" />
+                          </span>
                         </button>
                       </div>
                     </SwiperSlide>
@@ -314,33 +317,34 @@ const AddItem = () => {
                 {imageURLs.map((url, index) => (
                   <div
                     key={index}
-                    className="relative w-32 h-32 md:w-40 md:h-40  lg:w-48 lg:h-48 sm:w-48 sm:h-48"
+                    className="relative w-32 h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 sm:w-48 sm:h-48"
                   >
-                    <div className="w-full h-full border border-gray-300 bg-gray-100 flex items-center justify-center cursor-pointer relative">
+                    <div
+                      className={`w-full h-full rounded-xl border-gray-300 bg-gray-50 flex items-center justify-center cursor-pointer relative ${
+                        url
+                          ? "border-none"
+                          : "border-2 border-dashed border-gray-300 hover:border-blue-300"
+                      } `}
+                    >
                       {url ? (
                         <>
                           <img
                             src={url}
                             alt={`Preview ${index + 1}`}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full rounded-xl object-cover"
                           />
-                          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+                          <div className="absolute inset-0 bg-black/50 flex items-center rounded-xl justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
                             <button
                               type="button"
                               onClick={() => handleRemoveImage(index)}
-                              className="w-8 h-8"
                             >
-                              <img
-                                src={assets.recycle_bin}
-                                alt="Remove"
-                                className="filter invert"
-                              />
+                              <Trash2 className="w-8 h-8 text-white hover:scale-125 transition-all duration-300 ease-in-out" />
                             </button>
                           </div>
                         </>
                       ) : (
-                        <label className="w-full h-full flex items-center justify-center cursor-pointer">
-                          <img src={assets.upload_area} alt="Upload area" />
+                        <label className=" flex items-center justify-center cursor-pointer">
+                          <CloudUpload className="w-10 h-10 text-gray-400 hover:text-blue-500 hover:scale-125 transition-all duration-300 ease-in-out" />
                           <input
                             type="file"
                             className="hidden"
@@ -354,13 +358,18 @@ const AddItem = () => {
                   </div>
                 ))}
                 {images.length < 5 && (
-                  <div className="relative w-32 h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 sm:w-48 sm:h-48 border border-gray-300 bg-gray-100 flex items-center justify-center">
+                  <div
+                    className="relative w-32 h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 sm:w-48 sm:h-48 rounded-xl bg-gray-50 border-2 border-dashed 
+                  border-gray-300 hover:border-blue-300 flex items-center justify-center"
+                  >
                     <button
                       type="button"
                       onClick={handleAddImage}
                       className="flex items-center justify-center w-full h-full"
                     >
-                      <span>+</span>
+                      <span>
+                        <Plus className="w-10 h-10 text-gray-400 hover:text-blue-500 hover:scale-125 transition-all duration-300 ease-in-out" />
+                      </span>
                     </button>
                   </div>
                 )}
@@ -376,11 +385,12 @@ const AddItem = () => {
               name="name"
               value={formData.name}
               onChange={handleInputChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-blue-300"
               placeholder="Type here"
               required
             />
           </div>
+
           <div className="col-span-2">
             <label className="block text-sm font-medium text-gray-700">
               Product Description
@@ -389,73 +399,23 @@ const AddItem = () => {
               name="description"
               value={formData.description}
               onChange={handleInputChange}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-
-                  const { selectionStart, selectionEnd } = e.target;
-                  const value = formData.description;
-
-                  const newValue =
-                    value.substring(0, selectionStart) +
-                    "\n" +
-                    value.substring(selectionEnd);
-
-                  setFormData((prevState) => ({
-                    ...prevState,
-                    description: newValue,
-                  }));
-
-                  setTimeout(() => {
-                    e.target.selectionStart = e.target.selectionEnd =
-                      selectionStart + 1;
-                  }, 0);
-                }
-
-                if (e.key === "Tab") {
-                  e.preventDefault();
-
-                  const { selectionStart, selectionEnd } = e.target;
-                  const value = formData.description;
-                  const newValue =
-                    value.substring(0, selectionStart) +
-                    "\t" +
-                    value.substring(selectionEnd);
-
-                  setFormData((prevState) => ({
-                    ...prevState,
-                    description: newValue,
-                  }));
-
-                  setTimeout(() => {
-                    e.target.selectionStart = e.target.selectionEnd =
-                      selectionStart + 1;
-                  }, 0);
-                }
-              }}
-              onInput={(e) => {
-                e.target.style.height = "auto";
-                e.target.style.height = `${e.target.scrollHeight}px`;
-              }}
-              style={{
-                overflow: "hidden",
-                resize: "none",
-              }}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-xl resize-none h-[200px]
+              overflow-y-auto focus:outline-blue-300"
               placeholder="Write content here"
               rows="2"
               required
-            ></textarea>
+            />
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Product Category
+              Category
             </label>
             <select
               name="category"
               value={formData.category}
               onChange={handleInputChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-blue-300"
               required
             >
               <option>Men</option>
@@ -471,7 +431,7 @@ const AddItem = () => {
               name="subCategory"
               value={formData.subCategory}
               onChange={handleInputChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-blue-300"
               required
             >
               {subCategoriesList.map((subCategory) => (
@@ -490,7 +450,7 @@ const AddItem = () => {
               name="price"
               value={formData.price}
               onChange={handleInputChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-blue-300"
               placeholder="25"
               required
             />
@@ -499,14 +459,16 @@ const AddItem = () => {
             <label className="block text-sm font-medium text-gray-700">
               Product Sizes
             </label>
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 mt-3">
               {Object.keys(availableSizes).map((size) => (
                 <button
                   key={size}
                   type="button"
                   onClick={() => handleSizeToggle(size)}
-                  className={`border py-2 px-4 bg-gray-100 rounded-md ${
-                    availableSizes[size] ? "bg-gray-950 text-white" : ""
+                  className={`py-2 px-4 border text-sm transition-all duration-300 transform hover:-translate-y-1 mb-6  ${
+                    availableSizes[size]
+                      ? "bg-gray-900 hover:bg-gray-800 text-white border-gray-100"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300"
                   }`}
                 >
                   {size}
@@ -514,47 +476,33 @@ const AddItem = () => {
               ))}
             </div>
           </div>
-          <div className="col-span-2 flex items-center">
-            <input
-              id="bestseller"
-              name="bestseller"
-              type="checkbox"
-              checked={formData.bestseller}
-              onChange={(e) =>
-                setFormData({ ...formData, bestseller: e.target.checked })
-              }
-              className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
-            />
-            <label
-              htmlFor="bestseller"
-              className="ml-2 block text-sm text-gray-700"
-            >
-              Add to bestseller
-            </label>
-          </div>
         </div>
-        <div className="col-span-2 flex justify-end space-x-4">
+
+        <div className="col-span-2 flex justify-end space-x-4 mt-6">
           <button
-            className="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600"
+            className="px-6 py-2 rounded-lg border shadow-md hover:shadow-lg text-gray-700 bg-gray-100 hover:bg-gray-200 border-gray-200 
+            hover:border-gray-300 transform hover:-translate-y-1 transition-all duration-300 ease-in-out"
             type="button"
-            onClick={() => navigate(-1)} // Cancel button
+            onClick={() => navigate(-1)}
           >
             Cancel
           </button>
           <button
-            className={`px-6 py-2 rounded-md text-white ${
-              isFormValid ? "bg-black" : "bg-gray-300 cursor-not-allowed"
+            className={`px-10 py-2 rounded-lg border shadow-md hover:shadow-lg transition-all duration-300 ease-in-out ${
+              isFormValid
+                ? "bg-gray-900 hover:bg-gray-800 text-white transform hover:-translate-y-1"
+                : "text-gray-700 bg-gray-100 hover:bg-gray-200 border-gray-200 hover:border-gray-300 cursor-not-allowed"
             }`}
             type="submit"
             disabled={!isFormValid}
           >
-            ADD
+            Add
           </button>
         </div>
       </form>
       <ToastContainer />
       {isLoading && (
-        <div className="fixed inset-0 bg-black opacity-50   flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+        <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
           <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
         </div>
       )}

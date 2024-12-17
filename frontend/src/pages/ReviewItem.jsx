@@ -1,11 +1,16 @@
-import React, { useState, useEffect, useMemo, useRef, useContext } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import { ShopContext } from "../context/ShopContext";
 import { useParams, useNavigate } from "react-router-dom";
 import Title from "../components/Title";
-import { assets } from "../assets/assets";
+// import { assets } from "../assets/assets";
 import { formatPrice } from "../utils/formatPrice";
 import SkeletonReviewItem from "../components/SkeletonReviewItem";
 import SweetAlert from "../components/SweetAlert";
+import { ClipboardList, Star, Trash2 } from "lucide-react";
+import { IoChatbubbleEllipsesOutline } from "react-icons/io5";
+import { useReviewFilter } from "../utils/useReviewFilter";
+import { motion, AnimatePresence } from "framer-motion";
+import { FaTimes } from "react-icons/fa";
 
 const ReviewItem = () => {
   const { fetchProductAndReviews, submitReplyToReview, deleteReview } =
@@ -14,26 +19,49 @@ const ReviewItem = () => {
   const [reviews, setReviews] = useState([]);
   const [product, setProduct] = useState(null);
   const [averageRating, setAverageRating] = useState(0);
-  const [selectedRatingFilter, setSelectedRatingFilter] = useState(0);
-  const [selectedSizeFilter, setSelectedSizeFilter] = useState("");
-  const [selectedDateFilter, setSelectedDateFilter] = useState("");
-  const [showImageOnly, setShowImageOnly] = useState(false);
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
-  const [isRatingDropdownOpen, setIsRatingDropdownOpen] = useState(false);
-  const [isSizeDropdownOpen, setIsSizeDropdownOpen] = useState(false);
-  const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [currentReplyId, setCurrentReplyId] = useState(null);
   const ratingDropdownRef = useRef(null);
   const sizeDropdownRef = useRef(null);
   const dateDropdownRef = useRef(null);
 
+  const [selectedReviewImage, setSelectedReviewImage] = useState("");
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+
   const navigate = useNavigate();
-  const allSizes = ["S", "M", "L", "XL", "XXL"];
 
   const [isloading, setIsLoading] = useState(true);
   const [isReply, setIsReply] = useState();
   const [isDelete, setIsDelete] = useState();
+  const [isOverlay, setIsOverlay] = useState();
+
+  const {
+    selectedRatingFilter,
+    selectedSizeFilter,
+    showImageOnly,
+    selectedDateFilter,
+    allSizes,
+
+    setShowImageOnly,
+
+    countAllReviews,
+    countReviewsWithImage,
+    countReviewsByRating,
+
+    handleRatingFilterChange,
+    handleSizeFilterChange,
+    handleDateFilterChange,
+
+    isRatingDropdownOpen,
+    isSizeDropdownOpen,
+    isDateDropdownOpen,
+    setIsRatingDropdownOpen,
+    setIsSizeDropdownOpen,
+    setIsDateDropdownOpen,
+
+    filteredReviews,
+  } = useReviewFilter(reviews);
 
   // Fetching product and reviews
   useEffect(() => {
@@ -76,7 +104,7 @@ const ReviewItem = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [setIsDateDropdownOpen, setIsRatingDropdownOpen, setIsSizeDropdownOpen]);
 
   // Handler untuk balasan admin
   const handleReplySubmit = async (reviewId) => {
@@ -92,16 +120,6 @@ const ReviewItem = () => {
     setIsReply(false);
   };
 
-  // Handler untuk menghapus review
-  // const handleDeleteReview = async (reviewId) => {
-  //   setIsDelete(true);
-  //   await deleteReview(productId, reviewId);
-  //   setReviews((prevReviews) =>
-  //     prevReviews.filter((review) => review._id !== reviewId)
-  //   );
-  //   setIsDelete(false);
-  // };
-
   // Fungsi Rata-Rata Rating
   const calculateAverageRating = (reviews) => {
     if (reviews.length === 0) return 0;
@@ -109,151 +127,9 @@ const ReviewItem = () => {
     return totalRating / reviews.length;
   };
 
-  // Fungsi 1 star dan rating (0.0- 5.0)
-  const renderSingleStarWithRating = (rating, reviewCount) => {
-    return (
-      <div className="flex items-center">
-        <img src={assets.star_icon} alt="Star" className="w-4 text-red-500" />
-        <span className="ml-1 text-gray-800">{rating.toFixed(1)}</span>
-        <span className="ml-2 text-gray-800">({reviewCount})</span>
-      </div>
-    );
-  };
-
-  // Fungsi filter by rating tanpa gaya
-  const renderStarRatingLabel = (rating) => {
-    return (
-      <div className="flex items-center">
-        <span>Filter by Rating</span>
-        {rating > 0 && (
-          <span className="ml-2 flex items-center">
-            <span className="mr-1">(</span> 
-            <img
-              src={assets.star_icon}
-              alt="Star"
-              className="w-4 h-4 text-yellow-500"
-            />
-            <span className="ml-1">{rating})</span>{" "}
-          </span>
-        )}
-      </div>
-    );
-  };
-
-  // Fungsi filter by size tanpa gaya
-  const renderSizeLabel = (selectedSize) => {
-    return (
-      <div className="flex items-center">
-        <span>Filter by Size</span>
-        {selectedSize && (
-          <span className="ml-2 flex items-center">
-            <span className="mr-1">(</span>
-            <span>{selectedSize}</span>
-            <span className="ml-1">)</span> 
-          </span>
-        )}
-      </div>
-    );
-  };
-
-  // Fungsi render star dropdown select tanpa gaya
-  const renderModernStars = (rating, handleRatingFilterChange) => {
-    return (
-      <div className="flex flex-col gap-2">
-        {[...Array(5)].map((_, rowIndex) => {
-          const starCount = 5 - rowIndex; 
-          const reviewCount = countReviewsByRating(starCount); 
-
-          return (
-            <button
-              key={rowIndex}
-              onClick={() => handleRatingFilterChange(starCount)} 
-              className="border border-gray-300 p-2 rounded-md hover:bg-gray-100 transition focus:outline-none w-full flex items-center justify-between"
-            >
-              <div className="flex">
-                {[...Array(starCount)].map((_, starIndex) => (
-                  <img
-                    key={starIndex}
-                    src={
-                      starCount === rating
-                        ? assets.star_icon 
-                        : assets.star_dull_icon 
-                    }
-                    alt={`${starCount} Star`}
-                    className="w-5 h-5 mx-1" 
-                  />
-                ))}
-              </div>
-
-              <span className="ml-2 text-sm text-gray-600">
-                ({reviewCount})
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    );
-  };
-
-  // Fungsi render size dropdown select tanpa gaya
-  const renderModernSizes = (selectedSizeFilter, handleSizeFilterChange) => {
-    const availableSizesFromReviews = reviews.reduce((acc, review) => {
-      if (review.size && !acc.includes(review.size)) {
-        acc.push(review.size);
-      }
-      return acc;
-    }, []);
-
-    return (
-      <div>
-        {allSizes.map((size, i) => {
-          const isAvailable = availableSizesFromReviews.includes(size);
-          return (
-            <button
-              key={i}
-              onClick={() => handleSizeFilterChange(size)}
-              disabled={!isAvailable}
-            >
-              {size}
-            </button>
-          );
-        })}
-      </div>
-    );
-  };
-
-  // Fungsi render star review user
-  const renderStars = (rating, color = "text-red-500") => {
-    return (
-      <div className={`flex ${color}`}>
-        {[...Array(5)].map((_, i) => (
-          <img
-            key={i}
-            src={i < rating ? assets.star_icon : assets.star_dull_icon}
-            alt="Star"
-            className="w-4"
-          />
-        ))}
-      </div>
-    );
-  };
-
-  // Fungsi perubahan star filter
-  const handleRatingFilterChange = (rating) => {
-    setSelectedRatingFilter(selectedRatingFilter === rating ? 0 : rating);
-    setIsRatingDropdownOpen(false);
-  };
-
-  // Fungsi perubahan size filter
-  const handleSizeFilterChange = (size) => {
-    setSelectedSizeFilter(selectedSizeFilter === size ? "" : size);
+  const handleSizeFilterChangeWithDropdown = (size) => {
+    handleSizeFilterChange(size);
     setIsSizeDropdownOpen(false);
-  };
-
-  // Fungsi perubahan date filter
-  const handleDateFilterChange = (order) => {
-    setSelectedDateFilter(selectedDateFilter === order ? "" : order);
-    setIsDateDropdownOpen(false);
   };
 
   // Fungsi dynamis filter menu
@@ -261,62 +137,29 @@ const ReviewItem = () => {
     setIsFilterMenuOpen(!isFilterMenuOpen);
   };
 
-  // Filter review img,star,size,date
-  const filteredReviews = useMemo(() => {
-    const filtered = reviews.filter((review) => {
-      const ratingMatches =
-        selectedRatingFilter === 0 || review.rating === selectedRatingFilter;
-      const sizeMatches =
-        selectedSizeFilter === "" || review.size === selectedSizeFilter;
-      const imageMatches = showImageOnly
-        ? review.reviewImages.length > 0
-        : true;
-
-      return ratingMatches && sizeMatches && imageMatches;
-    });
-
-    if (selectedDateFilter === "" || selectedDateFilter === "latest") {
-      return filtered.sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-      );
-    } else if (selectedDateFilter === "oldest") {
-      return filtered.sort(
-        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-      );
-    }
-
-    return filtered;
-  }, [
-    reviews,
-    selectedRatingFilter,
-    selectedSizeFilter,
-    showImageOnly,
-    selectedDateFilter,
-  ]);
-
-  // Hitung total semua review (All)
-  const countAllReviews = reviews.length;
-
-  // Hitung review dengan gambar (With Image) yang sesuai dengan filter rating
-  const countReviewsWithImage = reviews.filter(
-    (review) =>
-      review.reviewImages.length > 0 &&
-      (selectedRatingFilter === 0 || review.rating === selectedRatingFilter)
-  ).length;
-
-  // Hitung review berdasarkan rating tertentu (Rating)
-  const countReviewsByRating = (rating) =>
-    reviews.filter((review) => review.rating === rating).length;
-
   const handleDeleteReview = async (reviewId) => {
-    SweetAlert({
-      title: "Delete Confirmation",
-      message: "Are you sure you want to delete this review?",
-      icon: "warning",
-      buttons: true,
-      dangerMode: true,
-      closeOnClickOutside: true,
-    }).then(async (willDelete) => {
+    try {
+      // Nonaktifkan scroll saat SweetAlert muncul
+      document.body.style.overflow = "hidden";
+      setIsOverlay(true);
+
+      const willDelete = await SweetAlert({
+        title: "Delete Confirmation",
+        message: "Are you sure you want to delete this review?",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+        closeOnClickOutside: true,
+        // Callback tambahan untuk memastikan scroll diatur ulang
+        onOpen: () => {
+          document.body.style.overflow = "hidden";
+        },
+        onClose: () => {
+          document.body.style.overflow = "unset";
+          setIsOverlay(false);
+        },
+      });
+
       if (willDelete) {
         setIsDelete(true);
         await deleteReview(productId, reviewId);
@@ -324,18 +167,49 @@ const ReviewItem = () => {
           prevReviews.filter((review) => review._id !== reviewId)
         );
         setIsDelete(false);
-  
-        SweetAlert({
+
+        await SweetAlert({
           title: "Review Deleted",
           message: "The review has been successfully deleted.",
           icon: "success",
           buttons: true,
           closeOnClickOutside: true,
+          // Pastikan scroll diatur ulang
+          onClose: () => {
+            document.body.style.overflow = "unset";
+            setIsOverlay(false);
+          },
         });
       }
-    });
+    } catch (error) {
+      console.error("Error in delete process:", error);
+    } finally {
+      // Terakhir, pastikan overlay dan scroll diatur
+      document.body.style.overflow = "unset";
+      setIsOverlay(false);
+    }
   };
-  
+
+  useEffect(() => {
+    if (isReviewModalOpen || isDelete || isReply || isOverlay) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isReviewModalOpen, isDelete, isReply, isOverlay]);
+
+  const openReviewModal = (image) => {
+    setSelectedReviewImage(image);
+    setIsReviewModalOpen(true);
+  };
+
+  const closeReviewModal = () => {
+    setIsReviewModalOpen(false);
+  };
 
   return (
     <div className="px-4 py-8 sm:px-6 lg:px-0 max-w-6xl mx-auto">
@@ -351,39 +225,67 @@ const ReviewItem = () => {
         <>
           {/* Tampilkan data produk */}
           {product && (
-            <div
-              className="border p-6 rounded-lg shadow-md bg-white mb-8 transition-all duration-300 hover:shadow-2xl hover:border-gray-300 cursor-pointer"
-              onClick={() => navigate(-1)}
-            >
-              <div className="flex flex-col md:flex-row items-start">
-                {product.image && product.image.length > 0 && (
-                  <div className="w-full md:w-1/3 mb-4 md:mb-0 md:mr-6">
-                    <img
-                      src={product.image[0]}
-                      alt={product.name}
-                      className="w-full h-auto max-h-64 object-contain rounded-lg"
-                    />
+            <div className="mb-8">
+              <div
+                className="bg-white cursor-pointer rounded-2xl shadow-md border border-gray-100 overflow-hidden transition-all 
+                duration-300 hover:shadow-xl flex flex-col md:flex-row "
+                onClick={() => navigate(-1)}
+              >
+                {/* Image Section - Ukuran lebih kecil */}
+                <div className="w-full md:w-1/3 p-4 flex items-center justify-center">
+                  <img
+                    src={product.image[0]}
+                    alt={product.name}
+                    className="max-w-full max-h-[300px] object-cover rounded-lg shadow-md" // batasi tingginya
+                  />
+                </div>
+
+                {/* Product Information */}
+                <div className="p-6 w-full md:w-2/3 flex flex-col mb-4">
+                  <h1 className="text-xl font-medium text-gray-900 mb-4 ">
+                    {product.name}
+                  </h1>
+
+                  {/* Rating Section */}
+                  <div className="flex items-center mb-4">
+                    <div className="flex items-center space-x-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          fill="currentColor"
+                          className={`w-5 h-5 ${
+                            star <= Math.round(averageRating)
+                              ? "text-orange-500"
+                              : "text-orange-300 opacity-60"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-gray-600 ml-2 text-sm">
+                      {averageRating.toFixed(1)} ({reviews.length} reviews)
+                    </span>
                   </div>
-                )}
-                <div className="flex flex-col space-y-4 w-full">
-                  <h1 className="font-medium text-2xl mt-2 line-clamp-2">{product.name}</h1>
-                  <div className="flex items-center gap-1 mt-2">
-                    {renderSingleStarWithRating(averageRating, reviews.length)}
-                  </div>
-                  <p className="text-gray-600 text-sm md:text-base line-clamp-2">
-                    {product.description}
-                  </p>
-                  <div className="flex flex-col space-y-2 mt-2 text-sm md:text-base">
-                    <p className="text-gray-700">
-                      <strong>Category:</strong> {product.category}
-                    </p>
-                    <p className="text-gray-700">
-                      <strong>Sub Category:</strong> {product.subCategory}
-                    </p>
-                    <p className="text-gray-700">
-                      <strong>Price:</strong> Rp
-                      {formatPrice(product.price || 0)}
-                    </p>
+
+                  {/* Product Details - Grid Layout */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-gray-100 pt-4">
+                    {[
+                      { label: "Category", value: product.category },
+                      { label: "Sub Category", value: product.subCategory },
+                      {
+                        label: "Price",
+                        value: `Rp${formatPrice(product.price || 0)}`,
+                      },
+                      { label: "Sizes", value: product.sizes.join(", ") },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="flex flex-col">
+                        <p className="text-gray-800 font-medium text-sm">
+                          {label}:
+                        </p>
+                        <p className="text-gray-500 text-base truncate">
+                          {value}
+                        </p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -402,20 +304,18 @@ const ReviewItem = () => {
           </div>
 
           {isFilterMenuOpen && (
-            <div className="my-4 border p-4">
+            <div className="my-4 border p-4 flex flex-col rounded-2xl shadow-md bg-white transition-all duration-300  hover:border-gray-300">
               <div className="flex flex-wrap gap-4 justify-start">
                 {/* All Button */}
                 <button
-                  className={`border px-5 py-3 text-sm flex flex-col items-center justify-center w-full sm:w-auto ${
+                  className={`border px-5 py-3 text-sm text-gray-600 flex flex-col items-center justify-center w-full sm:w-auto rounded-md  bg-white transition-all duration-300 ${
                     !selectedRatingFilter &&
                     !selectedSizeFilter &&
                     !showImageOnly
-                      ? "font-bold border-black"
+                      ? "font-medium shadow-md sm:shadow-lg border-gray-300 text-gray-950"
                       : ""
                   }`}
                   onClick={() => {
-                    setSelectedRatingFilter(0);
-                    setSelectedSizeFilter("");
                     setShowImageOnly(false);
                   }}
                 >
@@ -425,8 +325,10 @@ const ReviewItem = () => {
 
                 {/* With Image Button */}
                 <button
-                  className={`border px-5 py-3 text-sm flex flex-col items-center justify-center w-full sm:w-auto ${
-                    showImageOnly ? "font-bold border-black" : ""
+                  className={`border px-5 py-3 text-sm text-gray-600 flex flex-col items-center justify-center w-full sm:w-auto rounded-md  bg-white transition-all duration-300 ${
+                    showImageOnly
+                      ? "font-medium shadow-md sm:shadow-lg border-gray-300 text-gray-950"
+                      : ""
                   }`}
                   onClick={() => setShowImageOnly(!showImageOnly)}
                 >
@@ -445,11 +347,29 @@ const ReviewItem = () => {
                     onClick={() =>
                       setIsRatingDropdownOpen(!isRatingDropdownOpen)
                     }
-                    className={`border px-4 py-3 text-sm flex flex-col items-center justify-center w-full sm:w-auto ${
-                      selectedRatingFilter ? "font-bold border-black" : ""
+                    className={`border px-5 py-3 text-sm text-gray-600 flex flex-col items-center justify-center w-full sm:w-auto rounded-md  bg-white transition-all duration-300 ${
+                      selectedRatingFilter
+                        ? "font-medium shadow-md sm:shadow-lg border-gray-300 text-gray-950"
+                        : ""
                     }`}
                   >
-                    {renderStarRatingLabel(selectedRatingFilter)}
+                    <div className="flex items-center">
+                      <span>Filter by Rating</span>
+                      {selectedRatingFilter > 0 && (
+                        <span className="ml-2 flex items-center">
+                          <span className="mr-1">(</span>
+                          <Star
+                            fill="currentColor"
+                            className={`w-4 h-4 ${
+                              selectedRatingFilter > 0
+                                ? "text-orange-500"
+                                : "text-orange-300 opacity-60"
+                            }`}
+                          />
+                          <span className="ml-1">{selectedRatingFilter})</span>
+                        </span>
+                      )}
+                    </div>
                     <span className="text-xs mt-1">
                       ({countReviewsByRating(selectedRatingFilter)})
                     </span>
@@ -458,13 +378,68 @@ const ReviewItem = () => {
                   {isRatingDropdownOpen && (
                     <div
                       className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-10 p-2"
-                      style={{ minWidth: "200px" }}
+                      style={{ minWidth: "150px" }}
                     >
-                      <div className="flex flex-col items-start gap-2">
-                        {renderModernStars(
-                          selectedRatingFilter,
-                          handleRatingFilterChange
-                        )}
+                      <div className="flex flex-col gap-2">
+                        {[...Array(5)].map((_, rowIndex) => {
+                          const starCount = 5 - rowIndex;
+                          const reviewCount = countReviewsByRating(starCount);
+
+                          return (
+                            <button
+                              key={rowIndex}
+                              onClick={() =>
+                                reviewCount > 0 &&
+                                handleRatingFilterChange(starCount)
+                              }
+                              className={`p-2 rounded-md transition focus:outline-none w-full flex items-center justify-between ${
+                                reviewCount === 0
+                                  ? "cursor-not-allowed opacity-50"
+                                  : "group cursor-pointer"
+                              } ${
+                                starCount === selectedRatingFilter
+                                  ? "font-bold border-black"
+                                  : ""
+                              } ${
+                                starCount !== 1
+                                  ? "border-b border-gray-300"
+                                  : ""
+                              }`}
+                              disabled={reviewCount === 0}
+                            >
+                              {/* Render stars */}
+                              <div className="flex space-x-1">
+                                {[...Array(starCount)].map((_, starIndex) => (
+                                  <Star
+                                    key={starIndex}
+                                    fill="currentColor"
+                                    className={`w-4 h-4 transition-all duration-300 ${
+                                      reviewCount === 0
+                                        ? "text-gray-200"
+                                        : starCount === selectedRatingFilter
+                                        ? "text-orange-500"
+                                        : "text-orange-300 opacity-60"
+                                    } ${
+                                      reviewCount > 0 &&
+                                      "group-hover:text-orange-500 group-hover:opacity-100"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+
+                              {/* Display review count next to stars */}
+                              <span
+                                className={`ml-2 text-sm ${
+                                  reviewCount === 0
+                                    ? "text-gray-400"
+                                    : "text-gray-600 group-hover:text-black"
+                                }`}
+                              >
+                                ({reviewCount})
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -477,43 +452,65 @@ const ReviewItem = () => {
                 >
                   <button
                     onClick={() => setIsSizeDropdownOpen(!isSizeDropdownOpen)}
-                    className={`border px-5 py-3 text-sm flex flex-col items-center justify-center w-full sm:w-auto ${
-                      selectedSizeFilter ? "font-bold border-black" : ""
+                    className={`border px-5 py-3 text-sm text-gray-600 flex flex-col items-center justify-center w-full sm:w-auto rounded-md  bg-white transition-all duration-300 ${
+                      selectedSizeFilter
+                        ? "font-medium shadow-md sm:shadow-lg border-gray-300 text-gray-950"
+                        : ""
                     }`}
                   >
-                    {renderSizeLabel(selectedSizeFilter)}
+                    <div className="flex items-center">
+                      <span>Filter by Size</span>
+                      {selectedSizeFilter && (
+                        <span className="ml-2 flex items-center">
+                          <span className="mr-1">(</span>
+                          <span>{selectedSizeFilter}</span>
+                          <span className="ml-1">)</span>
+                        </span>
+                      )}
+                    </div>
                   </button>
 
                   {isSizeDropdownOpen && (
                     <div className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-10 sm:w-auto">
                       <div className="flex sm:justify-between justify-center gap-2 p-2">
-                        {renderModernSizes(
-                          selectedSizeFilter,
-                          handleSizeFilterChange
-                        ).props.children.map((button, i) => (
-                          <button
-                            key={i}
-                            onClick={button.props.onClick}
-                            className={`w-12 h-10 flex items-center justify-center border rounded-md text-sm transition-transform transform ${
-                              selectedSizeFilter === button.props.children
-                                ? "bg-gray-950 text-white"
-                                : reviews
-                                    .map((review) => review.size)
-                                    .includes(button.props.children)
-                                ? "bg-gray-100 hover:bg-gray-200"
-                                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                            } ${
-                              reviews
-                                .map((review) => review.size)
-                                .includes(button.props.children)
-                                ? "hover:scale-105"
-                                : ""
-                            } focus:outline-none`}
-                            disabled={button.props.disabled}
-                          >
-                            {button.props.children}
-                          </button>
-                        ))}
+                        {allSizes.map((size, i) => {
+                          const availableSizesFromReviews = reviews.reduce(
+                            (acc, review) => {
+                              if (review.size && !acc.includes(review.size)) {
+                                acc.push(review.size);
+                              }
+                              return acc;
+                            },
+                            []
+                          );
+
+                          const isAvailable =
+                            availableSizesFromReviews.includes(size);
+                          const reviewCountForSize = reviews.filter(
+                            (review) => review.size === size
+                          ).length;
+
+                          return (
+                            <button
+                              key={i}
+                              onClick={() =>
+                                handleSizeFilterChangeWithDropdown(size)
+                              }
+                              className={`w-12 h-10 flex items-center justify-center border  text-sm transition-transform transform ${
+                                selectedSizeFilter === size
+                                  ? "bg-gray-900 text-white"
+                                  : isAvailable
+                                  ? "bg-gray-100 hover:bg-gray-200"
+                                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                              } ${
+                                isAvailable ? "hover:scale-105" : ""
+                              } focus:outline-none`}
+                              disabled={reviewCountForSize === 0}
+                            >
+                              {size}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -526,8 +523,10 @@ const ReviewItem = () => {
                 >
                   <button
                     onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
-                    className={`border px-5 py-3 text-sm flex flex-col items-center justify-center w-full sm:w-auto ${
-                      selectedDateFilter ? "font-bold border-black" : ""
+                    className={`border px-5 py-3 text-sm text-gray-600 flex flex-col items-center justify-center w-full sm:w-auto rounded-md  bg-white transition-all duration-300 ${
+                      selectedDateFilter
+                        ? "font-medium shadow-md sm:shadow-lg border-gray-300 text-gray-950"
+                        : ""
                     }`}
                   >
                     {selectedDateFilter
@@ -538,24 +537,27 @@ const ReviewItem = () => {
                   </button>
 
                   {isDateDropdownOpen && (
-                    <div className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-10 sm:w-auto">
-                      <div className="flex sm:justify-between justify-center gap-2 p-2">
+                    <div
+                      className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg z-10 "
+                      style={{ minWidth: "128px" }}
+                    >
+                      <div className="flex flex-col sm:justify-between justify-center gap-2 p-2">
                         <button
                           onClick={() => handleDateFilterChange("latest")}
-                          className={`w-full sm:w-auto px-4 py-2 text-sm rounded-md transition-colors duration-200 ${
+                          className={`w-full  px-4 py-2 text-sm rounded-md transition-colors duration-200 ${
                             selectedDateFilter === "latest"
-                              ? "bg-black text-white"
-                              : "bg-white text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                              ? "bg-gray-900 text-white"
+                              : "bg-gray-100 hover:bg-gray-200 "
                           }`}
                         >
                           Newest
                         </button>
                         <button
                           onClick={() => handleDateFilterChange("oldest")}
-                          className={`w-full sm:w-auto px-4 py-2 text-sm rounded-md transition-colors duration-200 ${
+                          className={`w-full  px-4 py-2 text-sm rounded-md transition-colors duration-200 ${
                             selectedDateFilter === "oldest"
-                              ? "bg-black text-white"
-                              : "bg-white text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                              ? "bg-gray-900 text-white"
+                              : "bg-gray-100 hover:bg-gray-200 "
                           }`}
                         >
                           Oldest
@@ -570,15 +572,21 @@ const ReviewItem = () => {
 
           {/* Menampilkan review yang difilter */}
           {filteredReviews.length === 0 ? (
-            <p className="text-center mt-8 text-gray-600">
-              Tidak ada review untuk produk ini.
-            </p>
+            <div className="flex flex-col items-center justify-center min-h-[300px] text-center w-full">
+              <ClipboardList
+                className="h-24 w-24 text-gray-600 mb-4"
+                strokeWidth={1}
+              />
+              <p className="text-xl text-gray-600">
+                No reviews matching the selected filters.
+              </p>
+            </div>
           ) : (
             <div className="space-y-6 mt-8">
               {filteredReviews.map((review) => (
                 <div
                   key={review._id}
-                  className="border p-6 rounded-md shadow-lg bg-white flex flex-col justify-between items-start transition-all duration-300 hover:shadow-xl relative"
+                  className="border p-6 rounded-2xl shadow-lg bg-white flex flex-col justify-between items-start transition-all duration-300 hover:shadow-xl relative"
                 >
                   <div className="flex flex-col space-y-2 w-full">
                     <p className="font-semibold text-gray-800">
@@ -586,38 +594,68 @@ const ReviewItem = () => {
                     </p>
 
                     <div className="flex items-center">
-                      {renderStars(review.rating)}
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          fill={
+                            i < review.rating ? "currentColor" : "currentColor"
+                          }
+                          className={`w-4 h-4 ${
+                            i < review.rating
+                              ? "text-orange-500"
+                              : "text-orange-300 opacity-60"
+                          }`}
+                        />
+                      ))}
                     </div>
 
                     <p className="text-sm text-gray-500">
                       <strong>Size:</strong> {review.size}
                     </p>
 
-                    <p className="text-sm text-gray-600">{review.reviewText}</p>
+                    <div
+                      className="text-gray-800"
+                      style={{
+                        whiteSpace: "pre-wrap",
+                        wordWrap: "break-word",
+                        wordBreak: "break-all",
+                      }}
+                    >
+                      {review.reviewImages &&
+                        review.reviewImages.length > 0 && (
+                          <div className="w-full overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                            <div className="flex gap-2 mt-2 pb-2 min-w-full">
+                              {review.reviewImages.map((img, imgIndex) => (
+                                <img
+                                  key={imgIndex}
+                                  src={img}
+                                  alt={`Review Image ${imgIndex + 1}`}
+                                  className="flex-shrink-0 w-24 h-24 object-cover rounded cursor-pointer transition-all duration-500 brightness-90 shadow-md 
+                            hover:scale-110 hover:shadow-xl hover:brightness-100 active:scale-95"
+                                  onClick={() => openReviewModal(img)}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
-                    {review.reviewImages && review.reviewImages.length > 0 && (
-                      <div className="flex gap-2 mt-2">
-                        {review.reviewImages.map((img, imgIndex) => (
-                          <img
-                            key={imgIndex}
-                            src={img}
-                            alt={`Review Image ${imgIndex + 1}`}
-                            className="w-24 h-24 object-cover rounded-md shadow-md"
-                          />
-                        ))}
-                      </div>
-                    )}
+                      {review.reviewText.split("\n").map((paragraph, index) => (
+                        <p key={index} className="mb-2">
+                          {paragraph}
+                        </p>
+                      ))}
+                    </div>
 
                     {review.adminReply && (
-                      <div className="mt-4 p-4 bg-gray-100 rounded-md shadow-inner">
+                      <div className="mt-4 p-4 bg-gray-50 rounded-2xl shadow-inner">
                         <p className="text-gray-800 font-semibold">
-                          Balasan Admin:
+                          admin response
                         </p>
                         <p className="text-gray-700">{review.adminReply}</p>
                       </div>
                     )}
 
-                    <p className="text-gray-400 text-xs mt-2">
+                    <p className="text-gray-400 text-xs">
                       {new Intl.DateTimeFormat("en-GB", {
                         day: "2-digit",
                         month: "short",
@@ -626,18 +664,28 @@ const ReviewItem = () => {
                     </p>
 
                     {currentReplyId === review._id ? (
-                      <div className="mt-4 flex flex-col space-y-2">
+                      <div
+                        className="mt-4 flex flex-col space-y-4"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <textarea
                           value={replyText}
                           onChange={(e) => setReplyText(e.target.value)}
                           placeholder="Tulis balasan admin..."
-                          className="border p-2 rounded-md shadow-sm"
+                          className="border p-2 rounded-xl shadow-sm focus:outline-gray-800 transition duration-300 resize-none h-32 
+                           placeholder:text-gray-400"
                         />
+
                         <button
                           onClick={() => handleReplySubmit(review._id)}
-                          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-all"
+                          disabled={!replyText.trim()}
+                          className={`w-full flex items-center justify-center shadow-md hover:shadow-lg space-x-2 py-3 rounded-full ${
+                            replyText.trim()
+                              ? "bg-gray-900 text-white transition-all duration-300"
+                              : "bg-gray-100 text-gray-500 cursor-not-allowed"
+                          }`}
                         >
-                          Kirim Balasan
+                          send reply
                         </button>
                       </div>
                     ) : null}
@@ -645,28 +693,26 @@ const ReviewItem = () => {
 
                   <div className="flex justify-end items-center space-x-2 mt-4 w-full">
                     <button
-                      className="border border-black px-4 py-2 rounded-md hover:bg-black transition-all duration-500 group"
+                      className="p-2 rounded-full group bg-gray-100 border border-gray-200 hover:bg-gray-200 shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-in-out"
                       onClick={() =>
                         currentReplyId === review._id
                           ? setCurrentReplyId(null)
                           : setCurrentReplyId(review._id)
                       }
                     >
-                      <img
-                        src={assets.chat_icon}
+                      <IoChatbubbleEllipsesOutline
                         alt="Chat"
-                        className="w-6 h-6 filter group-hover:invert"
+                        className="w-7 h-7 text-gray-600 group-hover:text-gray-800"
                       />
                     </button>
 
                     <button
                       onClick={() => handleDeleteReview(review._id)}
-                      className="bg-black px-4 py-2 rounded-md active:bg-gray-800 transition-all duration-300"
+                      className="p-2 rounded-full group bg-red-50 border border-red-200 hover:bg-red-100 shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-in-out"
                     >
-                      <img
-                        src={assets.recycle_bin}
+                      <Trash2
+                        className="w-6 h-6 text-red-300 group-hover:text-red-500"
                         alt="Delete"
-                        className="w-6 h-6 filter invert contrast-200 brightness-200"
                       />
                     </button>
                   </div>
@@ -674,14 +720,72 @@ const ReviewItem = () => {
               ))}
             </div>
           )}
+
+          <AnimatePresence mode="wait">
+            {isReviewModalOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/30 flex items-center justify-center z-[100] backdrop-blur-sm p-4"
+                onClick={closeReviewModal}
+              >
+                <motion.div
+                  initial={{
+                    opacity: 0,
+                    y: 100, // Mulai dari bawah
+                    scale: 0.9,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0, // Naik ke posisi normal
+                    scale: 1,
+                  }}
+                  exit={{
+                    opacity: 0,
+                    y: 100, // Turun ke bawah saat keluar
+                    scale: 0.9,
+                  }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 15,
+                    mass: 2, // Massa lebih ringan
+                  }}
+                  className="relative bg-white/25 rounded-2xl p-0 sm:p-3 backdrop-blur-xl shadow-2xl border border-white/20 
+              flex flex-col items-center justify-center max-w-[90%] max-h-[90%]"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <img
+                    src={selectedReviewImage}
+                    alt="Full Review View"
+                    className="w-auto h-auto max-h-[80vh] max-w-[80vw] rounded-xl object-contain shadow-2xl 
+                transform transition-all duration-500 ease-in-out hover:scale-105"
+                  />
+
+                  <button
+                    className="absolute top-3 right-3 bg-black/20 hover:bg-black/30 backdrop-blur-sm rounded-full p-2 
+                text-white transition-all duration-300 hover:rotate-180 hover:scale-110"
+                    onClick={closeReviewModal}
+                  >
+                    <FaTimes className="w-5 h-5" />
+                  </button>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </>
       )}
       {isReply ||
         (isDelete && (
-          <div className="fixed inset-0 bg-black opacity-50 flex justify-center items-center z-50 transition-opacity duration-300 ease-in-out">
+          <div className="fixed inset-0 bg-black/30 flex justify-center items-center z-[100] transition-opacity duration-300 ease-in-out">
             <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-white"></div>
           </div>
         ))}
+
+      {isOverlay && (
+        <div className="fixed inset-0 flex justify-center items-center z-50 backdrop-blur-sm transition-opacity duration-300 ease-in-out"></div>
+      )}
     </div>
   );
 };

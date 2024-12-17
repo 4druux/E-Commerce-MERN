@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Cropper from "react-easy-crop";
 import PropTypes from "prop-types";
 import { getCroppedImg } from "../utils/cropImage";
+import { FaTimes } from "react-icons/fa";
 
 const CropModal = ({ imageSrc, onCropComplete, onClose }) => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -23,21 +24,18 @@ const CropModal = ({ imageSrc, onCropComplete, onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-lg w-full max-w-2xl min-h-[70vh] p-4 sm:p-6 flex flex-col animate-fade-in mx-4 sm:mx-0"
-        onClick={(e) => e.stopPropagation()} 
+        className="bg-white rounded-2xl border shadow-lg w-full max-w-2xl min-h-[70vh] p-4 sm:p-6 flex flex-col animate-fade-in mx-4 sm:mx-0"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex justify-between items-center border-b pb-4">
           <h2 className="text-lg font-semibold text-gray-800">Crop Image</h2>
-          <button
-            onClick={onClose}
-            className="text-3xl text-gray-500 hover:text-gray-800 focus:outline-none"
-          >
-            &times;
+          <button onClick={onClose} className="focus:outline-none">
+            <FaTimes className="w-6 h-6 text-gray-700 hover:rotate-90 transtion-all duration-300 ease-in-out" />
           </button>
         </div>
 
@@ -76,13 +74,14 @@ const CropModal = ({ imageSrc, onCropComplete, onClose }) => {
         <div className="flex justify-end mt-6 space-x-4">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-300 text-black rounded-lg shadow-sm hover:bg-gray-400"
+            className="px-6 py-2 rounded-lg border shadow-md hover:shadow-lg text-gray-700 bg-gray-100 hover:bg-gray-200 border-gray-200 
+            hover:border-gray-300 transform hover:-translate-y-1 transition-all duration-300 ease-in-out"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700"
+            className="bg-gray-900 hover:bg-gray-800 text-white transform hover:-translate-y-1 px-8 py-2 rounded-lg border shadow-md hover:shadow-lg transition-all duration-300 ease-in-out"
           >
             Save
           </button>

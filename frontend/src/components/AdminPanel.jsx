@@ -19,8 +19,22 @@ const AdminPanel = () => {
   };
 
   const handleLogout = () => {
-    navigate("/admin/login");
+    navigate("/login");
   };
+
+  useEffect(() => {
+    const isModalActive = isSidebarOpen;
+
+    if (isModalActive) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [isSidebarOpen]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -43,12 +57,7 @@ const AdminPanel = () => {
       <Sidebar isOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
 
       {/* Overlay untuk layar kecil dan besar ketika sidebar aktif */}
-      <div
-        className={`fixed inset-0 bg-black opacity-50 z-40 transition-opacity duration-300 ${
-          isSidebarOpen ? "block" : "hidden"
-        }`}
-        onClick={toggleSidebar}
-      ></div>
+      <div onClick={toggleSidebar}></div>
 
       {/* Konten utama yang menyesuaikan dengan lebar sidebar pada layar besar */}
       <div
@@ -65,9 +74,6 @@ const AdminPanel = () => {
             className="w-5 cursor-pointer"
             alt="Menu"
           />
-
-          {/* Ruang kosong untuk membuat posisi ikon profil di kanan */}
-          <div className="flex-1"></div>
 
           {/* Ikon profil di kanan */}
           <div className="relative" ref={profileMenuRef}>

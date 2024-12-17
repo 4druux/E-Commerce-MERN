@@ -9,7 +9,7 @@ import { unformatPrice } from "../utils/formatPrice";
 
 export const ShopContext = createContext();
 
-// const socket = io("http://localhost:5001");
+// const socket = io("http://localhost:5173");
 
 const ShopContextProvider = (props) => {
   const currency = "Rp";
@@ -19,15 +19,19 @@ const ShopContextProvider = (props) => {
   const [cartItems, setCartItems] = useState([]);
   const [products, setProducts] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isModalLogin, setIsModalLogin] = useState(false);
   const [orders, setOrders] = useState([]);
   const navigate = useNavigate();
 
   const fetchCartData = useCallback(
     async (token) => {
       try {
-        const response = await axios.get("http://localhost:5173/api/cart", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axios.get(
+          "https://ecommerce-backend-ebon-six.vercel.app/api/cart",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         setCartItems(response.data.items);
       } catch (error) {
         if (error.response && error.response.status === 401) {
@@ -45,17 +49,17 @@ const ShopContextProvider = (props) => {
 
   const fetchOrders = useCallback(async () => {
     const token = localStorage.getItem("authToken");
-    const userRole = localStorage.getItem("userRole"); // Get user role from localStorage
+    const userRole = localStorage.getItem("userRole");
 
     if (!token) {
       toast.error("No token found. Please log in again.");
-      navigate(userRole === "admin" ? "/admin/login" : "/login");
+      navigate(userRole === "admin" ? "/login" : "/login");
       return;
     }
 
     try {
       const responseUser = await axios.get(
-        "http://localhost:5173/api/user/me",
+        "https://ecommerce-backend-ebon-six.vercel.app/api/user/me",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -65,8 +69,8 @@ const ShopContextProvider = (props) => {
 
       const endpoint =
         role === "admin"
-          ? "http://localhost:5173/api/orders"
-          : "http://localhost:5173/api/orders/user-orders";
+          ? "https://ecommerce-backend-ebon-six.vercel.app/api/orders"
+          : "https://ecommerce-backend-ebon-six.vercel.app/api/orders/user-orders";
 
       const response = await axios.get(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
@@ -77,8 +81,7 @@ const ShopContextProvider = (props) => {
       if (error.response && error.response.status === 401) {
         setIsLoggedIn(false);
         localStorage.removeItem("authToken");
-        toast.error("Session expired. Please log in again.");
-        navigate(userRole === "admin" ? "/admin/login" : "/login"); // Navigate based on role
+        navigate(userRole === "admin" ? "/login" : "/login");
       } else {
         toast.error("Failed to load orders.");
       }
@@ -99,7 +102,7 @@ const ShopContextProvider = (props) => {
         localStorage.removeItem("tokenExpiration");
 
         toast.error("Session expired. Please log in again.");
-        navigate(userRole === "admin" ? "/admin/login" : "/login");
+        navigate(userRole === "admin" ? "/login" : "/login");
       }
     };
 
@@ -123,7 +126,7 @@ const ShopContextProvider = (props) => {
   const fetchProducts = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:5173/api/products/all"
+        "https://ecommerce-backend-ebon-six.vercel.app/api/products/all"
       );
 
       if (response.status === 200) {
@@ -150,7 +153,7 @@ const ShopContextProvider = (props) => {
 
     try {
       const response = await axios.get(
-        `http://localhost:5173/api/products/${productId}`
+        `https://ecommerce-backend-ebon-six.vercel.app/api/products/${productId}`
       );
       return response.data;
     } catch (error) {
@@ -163,26 +166,29 @@ const ShopContextProvider = (props) => {
   const addToCart = async (itemId, size, price, name, quantity = 1) => {
     if (!isLoggedIn) {
       navigate("/login");
-      return;
+      return false;
     }
-
     try {
       const token = localStorage.getItem("authToken");
 
-      const cartResponse = await axios.get("http://localhost:5173/api/cart", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const cartResponse = await axios.get(
+        "https://ecommerce-backend-ebon-six.vercel.app/api/cart",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       const cartItems = cartResponse.data.items;
 
       const existingItem = cartItems.find(
         (item) => item.productId === itemId && item.size === size
       );
 
+      let response;
       if (existingItem) {
         const updatedQuantity = existingItem.quantity + quantity;
 
-        const updateResponse = await axios.put(
-          "http://localhost:5173/api/cart/update",
+        response = await axios.post(
+          "https://ecommerce-backend-ebon-six.vercel.app/api/cart/update",
           {
             productId: itemId,
             size,
@@ -191,10 +197,10 @@ const ShopContextProvider = (props) => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        setCartItems(updateResponse.data.items);
+        setCartItems(response.data.items);
       } else {
         const productResponse = await axios.get(
-          `http://localhost:5173/api/products/${itemId}`
+          `https://ecommerce-backend-ebon-six.vercel.app/api/products/${itemId}`
         );
         const product = productResponse.data;
 
@@ -211,19 +217,26 @@ const ShopContextProvider = (props) => {
           name,
           imageUrl,
         };
-
         // Tambahkan ke keranjang
-        const response = await axios.post(
-          "http://localhost:5173/api/cart/add",
+        response = await axios.post(
+          "https://ecommerce-backend-ebon-six.vercel.app/api/cart/add",
           dataToSend,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
         setCartItems(response.data.items);
       }
+      return true;
     } catch (error) {
       console.error("Failed to add item to cart:", error);
-      toast.error("Failed to add item to cart.");
+      if (error.response) {
+        console.error("Server error:", error.response.data);
+      } else if (error.request) {
+        console.error("Network error");
+      } else {
+        console.error("Unexpected error");
+      }
+      return false;
     }
   };
 
@@ -237,7 +250,7 @@ const ShopContextProvider = (props) => {
     try {
       const token = localStorage.getItem("authToken");
       const response = await axios.post(
-        "http://localhost:5173/api/cart/update",
+        "https://ecommerce-backend-ebon-six.vercel.app/api/cart/update",
         { productId: itemId, size, quantity },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -258,7 +271,7 @@ const ShopContextProvider = (props) => {
     try {
       const token = localStorage.getItem("authToken");
       const response = await axios.post(
-        "http://localhost:5173/api/cart/remove",
+        "https://ecommerce-backend-ebon-six.vercel.app/api/cart/remove",
         { productId: itemId, size },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -273,8 +286,10 @@ const ShopContextProvider = (props) => {
   const handlePayment = async (paymentData, onSuccess, onError) => {
     try {
       const token = localStorage.getItem("authToken");
+
+      // Proses checkout
       const response = await axios.post(
-        "http://localhost:5173/api/cart/checkout",
+        "https://ecommerce-backend-ebon-six.vercel.app/api/cart/checkout",
         paymentData,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -282,9 +297,35 @@ const ShopContextProvider = (props) => {
       );
 
       if (response.status === 200) {
+        // Update soldCount untuk setiap produk yang dibeli
+        for (const item of paymentData.selectedItems) {
+          try {
+            // Kirim permintaan untuk memperbarui soldCount produk
+            const updateSoldCountResponse = await axios.post(
+              `https://ecommerce-backend-ebon-six.vercel.app/api/products/${item._id}/sell`, // Pastikan API endpoint sesuai
+              { quantity: item.quantity },
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            );
+
+            if (updateSoldCountResponse.status !== 200) {
+              console.error(
+                `Failed to update soldCount for product: ${item._id}`
+              );
+            }
+          } catch (error) {
+            console.error(
+              `Error updating soldCount for product ${item._id}:`,
+              error
+            );
+          }
+        }
+
+        // Hapus item dari keranjang setelah pembayaran berhasil
         for (const item of paymentData.selectedItems) {
           await axios.post(
-            "http://localhost:5173/api/cart/remove",
+            "https://ecommerce-backend-ebon-six.vercel.app/api/cart/remove",
             {
               productId: item._id,
               size: item.size,
@@ -296,18 +337,18 @@ const ShopContextProvider = (props) => {
         }
 
         if (onSuccess) {
-          onSuccess();
+          onSuccess(); // Panggil callback onSuccess
         }
       } else {
         console.error("Payment failed with status:", response.status);
         if (onError) {
-          onError();
+          onError(); // Panggil callback onError
         }
       }
     } catch (error) {
       console.error("Payment processing failed:", error);
       if (onError) {
-        onError();
+        onError(); // Panggil callback onError
       }
     }
   };
@@ -318,7 +359,7 @@ const ShopContextProvider = (props) => {
 
     try {
       const response = await axios.post(
-        `http://localhost:5173/api/products/${currentOrderForReview.items[0].productId}/review`,
+        `https://ecommerce-backend-ebon-six.vercel.app/api/products/${currentOrderForReview.items[0].productId}/review`,
         formData,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -336,13 +377,82 @@ const ShopContextProvider = (props) => {
     }
   };
 
+  const submitReturn = async (currentOrderForReturn, formData) => {
+    const token = localStorage.getItem("authToken");
+
+    try {
+      // Dapatkan productId dan size dari item yang akan di-return
+      const productToReturn = currentOrderForReturn.items[0]; // Misalkan hanya satu item
+
+      // Kirim request return ke backend
+      const response = await axios.post(
+        `https://ecommerce-backend-ebon-six.vercel.app/api/orders/${currentOrderForReturn._id}/return`,
+        {
+          reason: formData.reason,
+          description: formData.description || "", // Optional description
+          returnImages: formData.returnImages || [], // Array gambar return (jika ada)
+          productId: productToReturn.productId,
+          size: productToReturn.size,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        return response.data;
+      } else {
+        toast.error("Failed to submit return request.");
+        throw new Error("Return submission failed");
+      }
+    } catch (error) {
+      console.error("Failed to submit return:", error);
+
+      // Gunakan pesan error dari backend jika tersedia
+      const errorMessage =
+        error.response?.data?.message ||
+        "An error occurred while submitting the return request.";
+
+      toast.error(errorMessage);
+      throw error;
+    }
+  };
+
+  const updateReturnStatus = async (orderId, returnData) => {
+    const token = localStorage.getItem("authToken");
+
+    try {
+      const response = await axios.put(
+        `https://ecommerce-backend-ebon-six.vercel.app/api/orders/return-status`,
+        {
+          orderId,
+          ...returnData,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error("Failed to update return status:", error);
+      throw error;
+    }
+  };
+
   // Orders.jsx || UserOrders.jsx
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       const token = localStorage.getItem("authToken");
 
       await axios.put(
-        "http://localhost:5173/api/orders/status",
+        "https://ecommerce-backend-ebon-six.vercel.app/api/orders/status",
         { orderId, status: newStatus },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -368,7 +478,7 @@ const ShopContextProvider = (props) => {
       const token = localStorage.getItem("authToken");
 
       await axios.put(
-        "http://localhost:5173/api/orders/status",
+        "https://ecommerce-backend-ebon-six.vercel.app/api/orders/status",
         { orderId, status: "Canceled" },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -389,9 +499,12 @@ const ShopContextProvider = (props) => {
     try {
       const token = localStorage.getItem("authToken");
 
-      await axios.delete(`http://localhost:5173/api/orders/${orderId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.delete(
+        `https://ecommerce-backend-ebon-six.vercel.app/api/orders/${orderId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       // Emit event to notify about the deletion
       // socket.emit("orderDeleted", { orderId });
@@ -409,9 +522,12 @@ const ShopContextProvider = (props) => {
     try {
       const token = localStorage.getItem("authToken");
 
-      await axios.delete(`http://localhost:5173/api/products/${productId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.delete(
+        `https://ecommerce-backend-ebon-six.vercel.app/api/products/${productId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       setProducts((prevProducts) =>
         prevProducts.filter((product) => product._id !== productId)
@@ -439,7 +555,7 @@ const ShopContextProvider = (props) => {
       };
 
       await axios.put(
-        `http://localhost:5173/api/products/${productId}`,
+        `https://ecommerce-backend-ebon-six.vercel.app/api/products/${productId}`,
         formattedData
       );
 
@@ -466,11 +582,11 @@ const ShopContextProvider = (props) => {
     const token = localStorage.getItem("authToken");
     try {
       const productResponse = await axios.get(
-        `http://localhost:5173/api/products/${productId}`,
+        `https://ecommerce-backend-ebon-six.vercel.app/api/products/${productId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const reviewResponse = await axios.get(
-        `http://localhost:5173/api/products/admin/${productId}/reviews`,
+        `https://ecommerce-backend-ebon-six.vercel.app/api/products/admin/${productId}/reviews`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -490,7 +606,7 @@ const ShopContextProvider = (props) => {
     const token = localStorage.getItem("authToken");
     try {
       await axios.put(
-        `http://localhost:5173/api/products/admin/${productId}/reviews/${reviewId}/reply`,
+        `https://ecommerce-backend-ebon-six.vercel.app/api/products/admin/${productId}/reviews/${reviewId}/reply`,
         { adminReply: replyText },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -505,7 +621,7 @@ const ShopContextProvider = (props) => {
     const token = localStorage.getItem("authToken");
     try {
       await axios.delete(
-        `http://localhost:5173/api/products/admin/${productId}/reviews/${reviewId}`,
+        `https://ecommerce-backend-ebon-six.vercel.app/api/products/admin/${productId}/reviews/${reviewId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
     } catch (error) {
@@ -583,6 +699,10 @@ const ShopContextProvider = (props) => {
     submitReplyToReview,
     deleteReview,
     submitReview,
+    submitReturn,
+    updateReturnStatus,
+    isModalLogin,
+    setIsModalLogin,
   };
 
   return (
