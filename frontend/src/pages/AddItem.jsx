@@ -161,11 +161,14 @@ const AddItem = () => {
         .map((image) => convertToBase64(image));
       const imageUrls = await Promise.all(imagePromises);
 
-      await axios.post("https://ecommerce-frontend-beta-dusky.vercel.app/api/products/add", {
-        ...formData,
-        price: unformatPrice(formData.price),
-        image: imageUrls,
-      });
+      await axios.post(
+        "https://ecommerce-backend-ebon-six.vercel.app/api/products/add",
+        {
+          ...formData,
+          price: unformatPrice(formData.price),
+          image: imageUrls,
+        }
+      );
 
       toast.success("Product added successfully!", {
         position: "top-right",

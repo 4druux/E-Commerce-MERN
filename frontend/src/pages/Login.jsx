@@ -20,7 +20,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        "https://ecommerce-frontend-beta-dusky.vercel.app/api/user/login",
+        "https://ecommerce-backend-ebon-six.vercel.app/api/user/login",
         {
           email,
           password,
