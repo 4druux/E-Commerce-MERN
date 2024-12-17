@@ -85,7 +85,7 @@ const ProductItem = ({ id, image, name, price, reviews, soldCount, rank }) => {
               </div>
             </div>
             <div className="p-4">
-              <p className="text-base font-medium text-gray-900 line-clamp-2 overflow-hidden">
+              <p className="text-base font-medium text-gray-900 line-clamp-1 overflow-hidden">
                 {name}
               </p>
               <p className="mt-2 text-sm  text-gray-900">
