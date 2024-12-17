@@ -506,5 +506,5 @@ module.exports = {
   removeFromCart,
   updateCartQuantity,
   checkoutCart,
-  clearCart, // Add this to the exported module
+  clearCart,
 };
